@@ -1,0 +1,184 @@
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field span {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.field small {
+  margin-top: -2px;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  padding: 14px 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 20px rgba(7, 12, 20, 0.08);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.field select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) calc(50% - 3px),
+    calc(100% - 16px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 42px;
+}
+
+.field select option,
+.field select optgroup {
+  background: var(--option-bg);
+  color: var(--option-text);
+}
+
+.field select option:hover,
+.field select option:focus {
+  background: var(--option-bg-hover);
+  color: var(--option-text);
+}
+
+.field select option:checked,
+.field select option[selected] {
+  background: var(--option-bg-selected);
+  color: var(--option-text);
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: rgba(97, 212, 179, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 4px rgba(97, 212, 179, 0.14),
+    0 16px 28px rgba(7, 12, 20, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.field-help {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 0.84rem;
+}
+
+.conditional-field[hidden] {
+  display: none;
+}
+
+.focus-form,
+.capture-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.execution-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  gap: 24px;
+}
+
+.operations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.finance-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.95fr) minmax(0, 1.05fr);
+  gap: 24px;
+}
+
+.focus-field,
+.focus-field textarea {
+  min-height: 100%;
+}
+
+.focus-mission {
+  grid-column: span 3;
+}
+
+.focus-mission textarea {
+  min-height: 120px;
+}
+
+.focus-actions,
+.capture-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.today-action-form {
+  display: grid;
+  gap: 16px;
+}
+
+.stack-form {
+  display: grid;
+  gap: 16px;
+}
+
+.today-action-actions,
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.inline-actions {
+  display: flex;
+  align-items: center;
+  align-content: flex-start;
+  justify-content: flex-start;
+  column-gap: 14px;
+  row-gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-actions > .button,
+.inline-actions > .action-button,
+.inline-actions > .output-action-button,
+.inline-actions > .project-action-button {
+  flex: 0 0 auto;
+}
+
+.inline-actions > .save-feedback,
+.inline-actions > .microcopy {
+  flex: 1 0 100%;
+  margin-top: 2px;
+}
+
+.capture-form .field:nth-child(2) {
+  grid-column: span 2;
+}
+
+.microcopy {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+

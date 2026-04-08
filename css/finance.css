@@ -1,0 +1,141 @@
+.money-goal-panel {
+  background: var(--panel-highlight);
+  border-color: rgba(97, 212, 179, 0.18);
+}
+
+.money-goal-form,
+.money-movement-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.money-goal-name-field,
+.money-goal-note-field,
+.money-movement-concept-field,
+.money-movement-note-field {
+  grid-column: span 2;
+}
+
+.finance-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.finance-summary-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 14px 24px rgba(7, 12, 20, 0.12);
+}
+
+.finance-summary-card-accent {
+  border-color: rgba(97, 212, 179, 0.22);
+  background: rgba(97, 212, 179, 0.1);
+}
+
+.finance-summary-value {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.money-progress-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(97, 212, 179, 0.18);
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 14px 24px rgba(7, 12, 20, 0.12);
+}
+
+.money-progress-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.money-progress-bar {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.money-progress-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--accent) 0%, #4db69a 100%);
+  box-shadow: 0 0 18px rgba(97, 212, 179, 0.25);
+  transition: width 0.25s ease;
+}
+
+.money-movement-save-button.is-saved,
+.money-goal-save-button.is-saved {
+  background: linear-gradient(135deg, var(--success) 0%, #58bf9e 100%);
+  color: #08110d;
+  box-shadow: 0 14px 28px rgba(88, 191, 158, 0.28);
+}
+
+.money-movement-card {
+  display: grid;
+  gap: 14px;
+}
+
+.money-movement-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.money-movement-amount {
+  font-size: 1.08rem;
+  color: var(--text);
+}
+
+.money-type-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 30px;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.money-type-ingreso {
+  color: #dffbf3;
+  border-color: rgba(97, 212, 179, 0.2);
+  background: rgba(97, 212, 179, 0.12);
+}
+
+.money-type-gasto {
+  color: #ffd5d5;
+  border-color: rgba(255, 107, 107, 0.2);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.money-type-cobro-pendiente {
+  color: #fff0ca;
+  border-color: rgba(255, 214, 135, 0.2);
+  background: rgba(255, 214, 135, 0.1);
+}
+

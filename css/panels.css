@@ -1,0 +1,228 @@
+.process-panel {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.process-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.output-edit-panel {
+  z-index: 40;
+}
+
+.project-edit-panel {
+  z-index: 42;
+}
+
+.idea-detail-panel {
+  z-index: 38;
+}
+
+.process-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 10, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.process-card {
+  position: relative;
+  width: min(560px, 100%);
+  height: 100%;
+  padding: 36px 24px 24px;
+  background: #263243;
+  border-left: 1px solid var(--line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    -32px 0 72px rgba(3, 7, 13, 0.42);
+  overflow-y: auto;
+}
+
+.output-edit-card {
+  background: #2a3748;
+}
+
+.project-edit-card {
+  background: #2a3748;
+}
+
+.idea-detail-card {
+  width: min(760px, 100%);
+  background: #2a3748;
+}
+
+.process-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(95, 108, 118, 0.14);
+  background: rgba(250, 247, 241, 0.82);
+  color: #4b5964;
+  font-size: 1.5rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    0 10px 18px rgba(55, 44, 29, 0.08);
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.icon-button:hover,
+.icon-button:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(95, 108, 118, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 14px 24px rgba(55, 44, 29, 0.1);
+}
+
+.process-context {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--line);
+  margin-bottom: 16px;
+  box-shadow: 0 18px 30px rgba(7, 12, 20, 0.18);
+}
+
+.process-context h3 {
+  margin-bottom: 6px;
+}
+
+.context-meta {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.process-guide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.guide-card {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 14px 22px rgba(7, 12, 20, 0.12);
+}
+
+.guide-title {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.guide-text {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.process-form {
+  display: grid;
+  gap: 16px;
+}
+
+.form-block {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 16px 28px rgba(7, 12, 20, 0.14);
+}
+
+.form-block-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-block-head {
+  grid-column: 1 / -1;
+}
+
+.process-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.idea-detail-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.idea-detail-block {
+  gap: 12px;
+}
+
+.idea-detail-description {
+  margin-bottom: 0;
+  color: var(--text);
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.idea-detail-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.idea-detail-trace-list {
+  display: grid;
+  gap: 12px;
+}
+
+.idea-detail-trace-card {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 14px 24px rgba(7, 12, 20, 0.12);
+}
+
+.idea-detail-trace-card h4 {
+  margin-bottom: 8px;
+}
+
+.idea-detail-trace-card p:last-child {
+  margin-bottom: 0;
+}
+
+.idea-detail-trace-kicker {
+  margin-bottom: 8px;
+  color: #9ab0c6;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.idea-detail-actions {
+  margin-top: 16px;
+}

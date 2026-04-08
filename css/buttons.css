@@ -1,0 +1,171 @@
+:is(.button, .accordion-global-button, .action-button, .output-action-button, .project-action-button, .dashboard-inline-button, .review-tab, .status-filter, .icon-button) {
+  --button-bg: rgba(250, 247, 241, 0.82);
+  --button-hover-bg: rgba(255, 255, 255, 0.92);
+  --button-active-bg: rgba(255, 255, 255, 0.82);
+  --button-border: rgba(95, 108, 118, 0.14);
+  --button-hover-border: rgba(95, 108, 118, 0.2);
+  --button-color: #24303a;
+  --button-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 10px 18px rgba(55, 44, 29, 0.08);
+  --button-shadow-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 14px 24px rgba(55, 44, 29, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 1px solid var(--button-border);
+  border-radius: 999px;
+  background: var(--button-bg);
+  color: var(--button-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  box-shadow: var(--button-shadow);
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+:is(.button, .accordion-global-button, .action-button, .output-action-button, .project-action-button, .dashboard-inline-button, .review-tab, .status-filter, .icon-button):hover {
+  transform: translateY(-1px);
+  background: var(--button-hover-bg);
+  border-color: var(--button-hover-border);
+  box-shadow: var(--button-shadow-hover);
+}
+
+:is(.button, .accordion-global-button, .action-button, .output-action-button, .project-action-button, .dashboard-inline-button, .review-tab, .status-filter, .icon-button):focus-visible {
+  outline: 2px solid rgba(111, 125, 95, 0.55);
+  outline-offset: 3px;
+  background: var(--button-hover-bg);
+  border-color: var(--button-hover-border);
+  box-shadow: var(--button-shadow-hover);
+}
+
+:is(.button, .accordion-global-button, .action-button, .output-action-button, .project-action-button, .dashboard-inline-button, .review-tab, .status-filter, .icon-button):active {
+  transform: translateY(0);
+  background: var(--button-active-bg);
+}
+
+:is(.button, .accordion-global-button, .action-button, .output-action-button, .project-action-button, .dashboard-inline-button, .review-tab, .status-filter, .icon-button):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.button-primary {
+  --button-bg: linear-gradient(180deg, rgba(97, 212, 179, 0.22), rgba(97, 212, 179, 0.12)), #f7fffc;
+  --button-hover-bg: linear-gradient(180deg, rgba(97, 212, 179, 0.26), rgba(97, 212, 179, 0.16)), #ffffff;
+  --button-active-bg: linear-gradient(180deg, rgba(97, 212, 179, 0.18), rgba(97, 212, 179, 0.1)), #f1fbf7;
+  --button-border: rgba(77, 182, 154, 0.22);
+  --button-hover-border: rgba(77, 182, 154, 0.3);
+  --button-color: #16352d;
+  --button-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 10px 20px rgba(77, 182, 154, 0.16);
+  --button-shadow-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 14px 24px rgba(77, 182, 154, 0.22);
+}
+
+.button-secondary {
+  --button-bg: rgba(250, 247, 241, 0.72);
+  --button-hover-bg: rgba(255, 255, 255, 0.88);
+  --button-active-bg: rgba(255, 255, 255, 0.78);
+  --button-border: rgba(95, 108, 118, 0.16);
+  --button-hover-border: rgba(95, 108, 118, 0.22);
+  --button-color: #40515d;
+}
+
+.review-tabs {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px;
+  border: 1px solid rgba(95, 108, 118, 0.14);
+  border-radius: 999px;
+  background: rgba(250, 247, 241, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 16px 28px rgba(55, 44, 29, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.output-card-actions {
+  margin-left: auto;
+}
+
+.focus-save-button.is-saved {
+  background: linear-gradient(135deg, var(--success) 0%, #58bf9e 100%);
+  color: #08110d;
+  box-shadow: 0 14px 28px rgba(88, 191, 158, 0.28);
+  animation: buttonSavedPulse 0.32s ease;
+}
+
+.today-save-button.is-saved,
+.project-save-button.is-saved,
+.priority-save-button.is-saved,
+.focus-block-save-button.is-saved,
+.boss-save-button.is-saved,
+.review-save-button.is-saved {
+  background: linear-gradient(135deg, var(--success) 0%, #58bf9e 100%);
+  color: #08110d;
+  box-shadow: 0 14px 28px rgba(88, 191, 158, 0.28);
+  animation: buttonSavedPulse 0.32s ease;
+}
+
+.output-save-button.is-saved {
+  background: linear-gradient(135deg, var(--success) 0%, #58bf9e 100%);
+  color: #08110d;
+  box-shadow: 0 14px 28px rgba(88, 191, 158, 0.28);
+  animation: buttonSavedPulse 0.32s ease;
+}
+
+.save-feedback {
+  min-height: 1.4em;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease, color 0.18s ease;
+}
+
+.save-feedback.is-visible {
+  color: #dffbf3;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.save-feedback.is-error {
+  color: #ffd5d5;
+}
+
+@keyframes buttonSavedPulse {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  45% {
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+

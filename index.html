@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refinería de Ideas</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/forms.css">
+  <link rel="stylesheet" href="css/buttons.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <link rel="stylesheet" href="css/finance.css">
+  <link rel="stylesheet" href="css/projects.css">
+  <link rel="stylesheet" href="css/ideas.css">
+  <link rel="stylesheet" href="css/panels.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!--
+    Esta aplicacion sigue siendo una base local-first:
+    todo se guarda dentro del navegador y funciona sin backend.
+
+    En esta etapa ampliamos la utilidad del panel principal sin
+    romper el flujo que ya existia:
+
+    1. Enfoque actual
+    2. Captura rapida
+    3. Inbox con busqueda y filtros
+    4. Salidas operativas
+    5. Panel lateral de procesamiento
+  -->
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Sistema local-first</p>
+        <h1>Refinería de Ideas</h1>
+        <p class="subtitle">
+          Captura ideas rápido, conviértelas en decisiones operativas y sostén el ritmo diario del sistema.
+        </p>
+      </div>
+    </header>
+
+    <nav class="view-switcher" aria-label="Cambiar vista del sistema" role="tablist">
+      <button
+        id="view-panel-operativo-button"
+        type="button"
+        class="view-switch-button is-active"
+        data-app-view-target="panel-operativo"
+        role="tab"
+        aria-controls="section-panel-operativo"
+        aria-selected="true"
+      >
+        Panel operativo
+      </button>
+      <button
+        id="view-operacion-diaria-button"
+        type="button"
+        class="view-switch-button"
+        data-app-view-target="operacion-diaria"
+        role="tab"
+        aria-controls="section-operacion-diaria"
+        aria-selected="false"
+      >
+        Operación diaria
+      </button>
+      <button
+        id="view-refineria-button"
+        type="button"
+        class="view-switch-button"
+        data-app-view-target="refineria"
+        role="tab"
+        aria-controls="section-refineria"
+        aria-selected="false"
+      >
+        Refinería
+      </button>
+    </nav>
+
+    <main class="workspace">
+      <div
+        id="section-panel-operativo"
+        class="app-view is-active"
+        data-app-view="panel-operativo"
+        role="tabpanel"
+        aria-labelledby="view-panel-operativo-button"
+        aria-label="Vista Panel operativo"
+      >
+        <section class="panel dashboard-panel" aria-labelledby="dashboard-title">
+          <div class="section-head dashboard-panel-head">
+            <div>
+              <p class="section-kicker">Panel superior</p>
+              <h2 id="dashboard-title">Panel operativo</h2>
+              <p class="section-support">
+                Una lectura clara del estado actual del sistema: dirección, ejecución y resultados.
+              </p>
+            </div>
+            <span class="pill dashboard-panel-pill">Estado actual</span>
+          </div>
+
+          <aside id="dashboard-guide-card" class="dashboard-guide-card" aria-label="Copiloto personalizable">
+            <button
+              id="dashboard-guide-edit-button"
+              type="button"
+              class="dashboard-guide-edit-button"
+              data-copilot-edit-toggle
+              aria-controls="dashboard-guide-editor"
+              aria-expanded="false"
+              aria-label="Editar copiloto"
+            >
+              Editar
+            </button>
+
+            <button
+              type="button"
+              class="dashboard-guide-presence"
+              data-copilot-edit-toggle
+              aria-controls="dashboard-guide-editor"
+              aria-expanded="false"
+            >
+              <img id="dashboard-guide-image" class="dashboard-guide-image" src="assets/copilots/cohete.svg" alt="Copiloto Cohete">
+              <span class="dashboard-guide-copy">
+                <span id="dashboard-guide-role" class="dashboard-guide-role">Tu copiloto</span>
+                <strong id="dashboard-guide-phrase" class="dashboard-guide-phrase">Hoy, solo avanza.</strong>
+              </span>
+            </button>
+
+            <form id="dashboard-guide-editor" class="dashboard-guide-editor" aria-label="Editar copiloto" hidden>
+              <label class="dashboard-guide-field" for="dashboard-guide-phrase-input">
+                <span class="dashboard-guide-field-label">Frase</span>
+                <input
+                  id="dashboard-guide-phrase-input"
+                  name="copilotPhrase"
+                  type="text"
+                  maxlength="72"
+                  placeholder="Hoy, solo avanza."
+                  autocomplete="off"
+                >
+              </label>
+
+              <label class="dashboard-guide-field" for="dashboard-guide-type-select">
+                <span class="dashboard-guide-field-label">Copiloto</span>
+                <select id="dashboard-guide-type-select" name="copilotType"></select>
+              </label>
+
+              <div class="dashboard-guide-editor-actions">
+                <button id="dashboard-guide-save" type="submit" class="dashboard-guide-save-button">Guardar</button>
+              </div>
+            </form>
+          </aside>
+
+          <div class="dashboard-overview">
+            <section class="dashboard-zone dashboard-zone-direction" aria-labelledby="dashboard-direction-title">
+              <div class="dashboard-zone-copy">
+                <p class="dashboard-zone-kicker">Direccion</p>
+                <h3 id="dashboard-direction-title">Hacia donde vas</h3>
+                <p>La brújula del sistema. Debe entenderse rápido y sin urgencia innecesaria.</p>
+              </div>
+
+              <div id="dashboard-grid" class="dashboard-grid dashboard-direction-grid">
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-wide dashboard-card-primary dashboard-direction-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#focus-panel"
+                  aria-label="Ir a Enfoque actual desde misión principal"
+                >
+                <span class="dashboard-label">Misión principal</span>
+                  <strong id="dashboard-mission" class="dashboard-value">Sin definir</strong>
+                </article>
+
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-wide dashboard-card-primary dashboard-direction-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#focus-panel"
+                  aria-label="Ir a Enfoque actual desde foco de la semana"
+                >
+                  <span class="dashboard-label">Foco de la semana</span>
+                  <strong id="dashboard-week-focus" class="dashboard-value">Sin definir</strong>
+                </article>
+              </div>
+            </section>
+
+            <section class="dashboard-zone dashboard-zone-execution" aria-labelledby="dashboard-execution-title">
+              <div class="dashboard-zone-copy">
+                <p class="dashboard-zone-kicker">Ejecucion</p>
+                <h3 id="dashboard-execution-title">Lo que mueves ahora</h3>
+                <p>La acción manda. El resto acompaña para empujarla sin ruido.</p>
+              </div>
+
+              <div class="dashboard-execution-layout">
+                <article
+                  id="dashboard-action-card"
+                  class="dashboard-card dashboard-nav-card dashboard-card-primary dashboard-action-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#today-panel"
+                  aria-label="Ir a Acción clave de hoy"
+                >
+                  <div class="dashboard-action-head">
+                    <span class="dashboard-label">Acción clave de hoy</span>
+                    <span id="dashboard-action-status" class="dashboard-action-status">EN MARCHA</span>
+                  </div>
+                  <strong id="dashboard-today-action" class="dashboard-value">Sin definir</strong>
+                  <p id="dashboard-action-support" class="dashboard-action-support">La pieza más importante para mover hoy.</p>
+                  <div class="dashboard-action-buttons">
+                    <button type="button" class="dashboard-inline-button dashboard-inline-button-primary" data-dashboard-action="complete">
+                      Completar
+                    </button>
+                    <button type="button" class="dashboard-inline-button dashboard-inline-button-secondary" data-dashboard-action="pause">
+                      Pausar
+                    </button>
+                    <button type="button" class="dashboard-inline-button dashboard-inline-button-ghost" data-dashboard-action="details" aria-controls="dashboard-action-details" aria-expanded="false">
+                      Ver detalles
+                    </button>
+                  </div>
+                  <p id="dashboard-action-feedback" class="dashboard-action-feedback" aria-live="polite"></p>
+                  <div id="dashboard-action-details" class="dashboard-action-details" role="region" aria-label="Detalles de la acción clave" aria-hidden="true">
+                    <div class="dashboard-action-details-grid">
+                      <article class="dashboard-action-detail-card">
+                        <span class="dashboard-action-detail-label">Dirección</span>
+                        <strong id="dashboard-action-context" class="dashboard-action-detail-value">Sin foco visible</strong>
+                      </article>
+
+                      <article class="dashboard-action-detail-card">
+                        <span class="dashboard-action-detail-label">Modo</span>
+                        <strong id="dashboard-action-mode" class="dashboard-action-detail-value">Operación</strong>
+                      </article>
+
+                      <article class="dashboard-action-detail-card">
+                        <span class="dashboard-action-detail-label">Jefe</span>
+                        <strong id="dashboard-action-boss" class="dashboard-action-detail-value">Sin fricción visible</strong>
+                      </article>
+
+                      <article class="dashboard-action-detail-card">
+                        <span class="dashboard-action-detail-label">Carga activa</span>
+                        <strong id="dashboard-action-load" class="dashboard-action-detail-value">0 proyectos · 0 prioridades</strong>
+                      </article>
+                    </div>
+                  </div>
+                </article>
+
+                <div class="dashboard-execution-side">
+                  <article
+                    class="dashboard-card dashboard-nav-card dashboard-card-accent dashboard-card-metric dashboard-execution-card"
+                    role="button"
+                    tabindex="0"
+                    data-scroll-target="#projects-panel"
+                    aria-label="Ir a Proyectos activos"
+                  >
+                    <span class="dashboard-label">Proyectos activos</span>
+                    <strong id="dashboard-active-projects" class="dashboard-value">0</strong>
+                  </article>
+
+                  <article
+                    class="dashboard-card dashboard-nav-card dashboard-card-metric dashboard-execution-card"
+                    role="button"
+                    tabindex="0"
+                    data-scroll-target="#priorities-panel"
+                    aria-label="Ir a 3 prioridades de hoy"
+                  >
+                    <span class="dashboard-label">Prioridades activas</span>
+                    <strong id="dashboard-active-priorities" class="dashboard-value">0</strong>
+                  </article>
+                </div>
+              </div>
+
+              <div class="dashboard-control-strip">
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-context dashboard-control-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#mode-panel"
+                  aria-label="Ir a Modos de operación"
+                >
+                  <span class="dashboard-label">Modo actual</span>
+                  <strong id="dashboard-mode" class="dashboard-value">Operación</strong>
+                </article>
+
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-context dashboard-control-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#boss-panel"
+                  aria-label="Ir a Jefe actual"
+                >
+                  <span class="dashboard-label">Jefe actual</span>
+                  <strong id="dashboard-boss" class="dashboard-value">Sin definir</strong>
+                </article>
+              </div>
+            </section>
+
+            <section class="dashboard-zone dashboard-zone-results" aria-labelledby="dashboard-results-title">
+              <div class="dashboard-zone-copy">
+                <p class="dashboard-zone-kicker">Resultados</p>
+                <h3 id="dashboard-results-title">Lo que está pasando</h3>
+                <p>Lectura neutra del sistema. Feedback real, sin competir con la acción.</p>
+              </div>
+
+              <div class="dashboard-results-grid">
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-metric dashboard-result-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#focus-blocks-panel"
+                  aria-label="Ir a Bloques de enfoque"
+                >
+                  <span class="dashboard-label">Bloques activos</span>
+                  <strong id="dashboard-focus-blocks" class="dashboard-value">0</strong>
+                </article>
+
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-metric dashboard-result-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#money-goal-panel"
+                  aria-label="Ir a Meta de dinero"
+                >
+                <span class="dashboard-label">Meta de dinero</span>
+                  <strong id="dashboard-money-goal" class="dashboard-value">Sin definir</strong>
+                </article>
+
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-accent dashboard-card-metric dashboard-result-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#money-goal-panel"
+                  aria-label="Ir a Cobros pendientes de Meta de dinero"
+                >
+                  <span class="dashboard-label">Cobros pendientes</span>
+                  <strong id="dashboard-pending-money" class="dashboard-value">$0</strong>
+                </article>
+
+                <article
+                  class="dashboard-card dashboard-nav-card dashboard-card-metric dashboard-result-card"
+                  role="button"
+                  tabindex="0"
+                  data-scroll-target="#money-goal-panel"
+                  aria-label="Ir a Avance de meta"
+                >
+                  <span class="dashboard-label">Avance de meta</span>
+                  <strong id="dashboard-money-progress" class="dashboard-value">0%</strong>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <div
+        id="section-operacion-diaria"
+        class="app-view"
+        data-app-view="operacion-diaria"
+        role="tabpanel"
+        aria-labelledby="view-operacion-diaria-button"
+        aria-label="Vista Operación diaria"
+        hidden
+      >
+      <section id="focus-panel" class="panel focus-panel" aria-labelledby="focus-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Centro operativo</p>
+            <h2 id="focus-title">Enfoque actual</h2>
+            <p class="section-support">
+              Define lo principal del momento para que el sistema te recuerde en qué vale la pena concentrarte.
+            </p>
+          </div>
+          <span class="pill pill-accent">Prioridad visible</span>
+        </div>
+
+        <form id="focus-form" class="focus-form">
+          <label class="field focus-field focus-mission">
+            <span>Misión principal</span>
+            <textarea
+              id="focus-mission"
+              name="mission"
+              rows="3"
+              maxlength="240"
+              placeholder="La dirección principal que quieres sostener en esta etapa"
+            ></textarea>
+          </label>
+
+          <label class="field focus-field">
+            <span>Foco de la semana</span>
+            <textarea
+              id="focus-week"
+              name="weekFocus"
+              rows="3"
+              maxlength="220"
+              placeholder="El frente que más importa esta semana"
+            ></textarea>
+          </label>
+
+          <div class="focus-actions">
+            <button
+              id="save-focus-button"
+              type="submit"
+              class="button button-primary focus-save-button"
+              data-default-label="Guardar enfoque"
+            >
+              Guardar enfoque
+            </button>
+            <p class="microcopy">Queda guardado y visible arriba para sostener dirección y contexto.</p>
+          </div>
+        </form>
+      </section>
+
+      <div class="execution-grid">
+        <section id="today-panel" class="panel today-panel" aria-labelledby="today-action-title">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Ejecucion real</p>
+              <h2 id="today-action-title">Acción clave de hoy</h2>
+              <p class="section-support">
+                Guarda una sola acción principal para que el sistema tenga una prioridad concreta y visible.
+              </p>
+            </div>
+            <span class="pill">Una cosa a la vez</span>
+          </div>
+
+          <form id="today-action-form" class="today-action-form">
+            <label class="field">
+              <span>Acción principal del día</span>
+              <textarea
+                id="today-action-input"
+                name="todayAction"
+                rows="4"
+                maxlength="220"
+                placeholder="La acción puntual que, si ocurre hoy, cambia el día"
+              ></textarea>
+            </label>
+
+            <div class="today-action-actions">
+              <button
+                id="save-today-action-button"
+                type="submit"
+                class="button button-primary today-save-button"
+                data-default-label="Guardar acción"
+              >
+                Guardar acción
+              </button>
+              <p id="today-action-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+
+        <section id="mode-panel" class="panel mode-panel" aria-labelledby="mode-title">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Modo del día</p>
+              <h2 id="mode-title">Modos de operación</h2>
+              <p class="section-support">
+                Elige una orientación para el día. Solo uno puede estar activo a la vez.
+              </p>
+            </div>
+            <span class="pill">Direccion tactica</span>
+          </div>
+
+          <div id="mode-options" class="mode-options">
+            <button type="button" class="mode-option" data-mode="supervivencia">
+              <strong>Supervivencia</strong>
+              <span>Proteger lo esencial</span>
+            </button>
+            <button type="button" class="mode-option" data-mode="operacion">
+              <strong>Operación</strong>
+              <span>Cumplir lo importante</span>
+            </button>
+            <button type="button" class="mode-option" data-mode="avance">
+              <strong>Avance</strong>
+              <span>Empujar estrategicamente</span>
+            </button>
+          </div>
+
+          <section id="mode-status-card" class="mode-status-card" aria-labelledby="mode-status-title">
+            <div class="mode-status-head">
+              <p class="context-label">Modo activo</p>
+            <span id="mode-status-pill" class="pill pill-accent">Operación</span>
+            </div>
+            <h3 id="mode-status-title" class="mode-status-title">Operación</h3>
+            <p id="mode-status-description" class="mode-status-description">Cumplir lo importante</p>
+            <p id="mode-status-message" class="mode-status-message">
+              Hoy el objetivo es cumplir lo importante con estabilidad.
+            </p>
+            <div id="mode-status-focus" class="mode-status-focus" aria-label="Claves del modo actual"></div>
+          </section>
+
+          <p id="mode-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <div class="operations-grid">
+        <section id="priorities-panel" class="panel priorities-panel" aria-labelledby="priorities-title">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Operación diaria</p>
+              <h2 id="priorities-title">3 prioridades de hoy</h2>
+              <p class="section-support">
+                Define hasta tres frentes realmente activos. La idea es decidir poco y mover mejor.
+              </p>
+            </div>
+            <span id="priorities-active-counter" class="pill pill-accent">0 activas</span>
+          </div>
+
+          <form id="priority-form" class="stack-form">
+            <label class="field">
+              <span>Prioridad</span>
+              <input
+                id="priority-title"
+                name="title"
+                type="text"
+                maxlength="160"
+                placeholder="La prioridad concreta que debe moverse hoy"
+                required
+              >
+            </label>
+
+            <div class="inline-actions">
+              <button
+                id="save-priority-button"
+                type="submit"
+                class="button button-primary priority-save-button"
+                data-default-label="Guardar prioridad"
+              >
+                Guardar prioridad
+              </button>
+              <button
+                id="cancel-priority-edit"
+                type="button"
+                class="button button-secondary"
+                hidden
+              >
+                Cancelar edición
+              </button>
+              <p id="priority-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+            </div>
+          </form>
+
+          <div id="priorities-list" class="compact-list" aria-live="polite"></div>
+        </section>
+
+        <section id="focus-blocks-panel" class="panel focus-blocks-panel" aria-labelledby="focus-blocks-title">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Proteccion de tiempo</p>
+              <h2 id="focus-blocks-title">Bloques de enfoque</h2>
+              <p class="section-support">
+                Reserva hasta dos bloques reales para proteger trabajo importante y no dejarlo al azar.
+              </p>
+            </div>
+            <span id="focus-blocks-active-counter" class="pill pill-accent">0 activos</span>
+          </div>
+
+          <form id="focus-block-form" class="stack-form focus-block-form">
+            <label class="field focus-block-name">
+              <span>Nombre o proposito</span>
+              <input
+                id="focus-block-title"
+                name="title"
+                type="text"
+                maxlength="160"
+                placeholder="Ej. Resolver la propuesta del cliente"
+                required
+              >
+            </label>
+
+            <label class="field">
+              <span>Hora de inicio</span>
+              <input id="focus-block-start" name="startTime" type="time">
+            </label>
+
+            <label class="field">
+              <span>Hora de fin</span>
+              <input id="focus-block-end" name="endTime" type="time">
+            </label>
+
+            <label class="field">
+              <span>Estado</span>
+              <select id="focus-block-status" name="status" required>
+                <option value="pendiente">Pendiente</option>
+                <option value="en curso">En curso</option>
+                <option value="completado">Completado</option>
+              </select>
+            </label>
+
+            <div class="inline-actions">
+              <button
+                id="save-focus-block-button"
+                type="submit"
+                class="button button-primary focus-block-save-button"
+                data-default-label="Guardar bloque"
+              >
+                Guardar bloque
+              </button>
+              <button
+                id="cancel-focus-block-edit"
+                type="button"
+                class="button button-secondary"
+                hidden
+              >
+                Cancelar edición
+              </button>
+              <p id="focus-block-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+            </div>
+          </form>
+
+          <div id="focus-blocks-list" class="compact-list" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <section id="boss-panel" class="panel boss-panel" aria-labelledby="boss-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Obstaculo dominante</p>
+            <h2 id="boss-title">Jefe actual</h2>
+            <p class="section-support">
+              Nombra lo que hoy o esta semana te está ganando terreno para poder atacarlo con más claridad.
+            </p>
+          </div>
+          <span class="pill">Friccion visible</span>
+        </div>
+
+        <form id="boss-form" class="stack-form">
+          <label class="field">
+            <span>Jefe actual</span>
+            <input
+              id="boss-title-input"
+              name="title"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Empezar y no terminar"
+              required
+            >
+          </label>
+
+          <label class="field">
+            <span>Nota breve</span>
+            <textarea
+              id="boss-note-input"
+              name="note"
+              rows="3"
+              maxlength="220"
+              placeholder="Una nota corta para dejar claro como se esta manifestando"
+            ></textarea>
+          </label>
+
+          <div class="inline-actions">
+            <button
+              id="save-boss-button"
+              type="submit"
+              class="button button-primary boss-save-button"
+              data-default-label="Guardar jefe actual"
+            >
+              Guardar jefe actual
+            </button>
+            <p id="boss-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+
+      <section id="review-panel" class="panel review-panel" aria-labelledby="review-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Ciclo de revisión</p>
+            <h2 id="review-title">Revision</h2>
+            <p class="section-support">
+              Usa esta zona para registrar lo aprendido y ajustar el sistema diario, semanal y mensual sin meter analítica compleja.
+            </p>
+          </div>
+          <span class="pill">Cierre y ajuste</span>
+        </div>
+
+        <div id="review-tabs" class="review-tabs" aria-label="Tipos de revisión">
+          <button type="button" class="review-tab is-active" data-review-tab="daily">Diaria</button>
+          <button type="button" class="review-tab" data-review-tab="weekly">Semanal</button>
+          <button type="button" class="review-tab" data-review-tab="monthly">Mensual</button>
+        </div>
+
+        <form id="review-form" class="review-form">
+          <label class="field">
+            <span id="review-question-one">Qué sí avancé hoy</span>
+            <textarea
+              id="review-answer-one"
+              name="answerOne"
+              rows="3"
+              maxlength="320"
+              placeholder="Lo que sí se movió hoy"
+              required
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span id="review-question-two">Qué me frenó</span>
+            <textarea
+              id="review-answer-two"
+              name="answerTwo"
+              rows="3"
+              maxlength="320"
+              placeholder="Lo que generó fricción"
+              required
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span id="review-question-three">¿Qué es lo más importante mañana?</span>
+            <textarea
+              id="review-answer-three"
+              name="answerThree"
+              rows="3"
+              maxlength="320"
+              placeholder="Lo siguiente más importante"
+              required
+            ></textarea>
+          </label>
+
+          <div class="inline-actions">
+            <button
+              id="save-review-button"
+              type="submit"
+              class="button button-primary review-save-button"
+              data-default-label="Guardar revisión"
+            >
+              Guardar revisión
+            </button>
+            <p id="review-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+          </div>
+        </form>
+
+        <div class="review-latest-grid">
+          <article class="review-latest-card">
+            <p class="context-label">Revisión diaria</p>
+            <div id="review-daily-latest" class="review-latest-content"></div>
+          </article>
+
+          <article class="review-latest-card">
+            <p class="context-label">Revisión semanal</p>
+            <div id="review-weekly-latest" class="review-latest-content"></div>
+          </article>
+
+          <article class="review-latest-card">
+            <p class="context-label">Revisión mensual</p>
+            <div id="review-monthly-latest" class="review-latest-content"></div>
+          </article>
+        </div>
+      </section>
+
+      <div class="finance-grid">
+        <section id="money-goal-panel" class="panel money-goal-panel" aria-labelledby="money-goal-title">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Direccion financiera</p>
+              <h2 id="money-goal-title">Meta de dinero</h2>
+              <p class="section-support">
+                Guarda una meta mensual simple para que el panel conecte trabajo, negocio y dinero sin volverse contabilidad pesada.
+              </p>
+            </div>
+            <span class="pill pill-accent">Meta mensual</span>
+          </div>
+
+          <form id="money-goal-form" class="money-goal-form">
+            <label class="field money-goal-name-field">
+              <span>Nombre de la meta</span>
+              <input
+                id="money-goal-name"
+                name="name"
+                type="text"
+                maxlength="140"
+                placeholder="Ej. Ventas del mes"
+                required
+              >
+            </label>
+
+            <label class="field">
+              <span>Cantidad objetivo</span>
+              <input
+                id="money-goal-amount"
+                name="targetAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                required
+              >
+            </label>
+
+            <label class="field money-goal-note-field">
+              <span>Nota opcional</span>
+              <textarea
+                id="money-goal-note"
+                name="note"
+                rows="3"
+                maxlength="220"
+                placeholder="Algo breve para aclarar esta meta"
+              ></textarea>
+            </label>
+
+            <div class="inline-actions">
+              <button
+                id="save-money-goal-button"
+                type="submit"
+                class="button button-primary money-goal-save-button"
+                data-default-label="Guardar meta"
+              >
+                Guardar meta
+              </button>
+              <p id="money-goal-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+            </div>
+          </form>
+
+          <div class="finance-summary-grid">
+            <article class="finance-summary-card">
+              <span class="dashboard-label">Ingresos</span>
+              <strong id="finance-total-income" class="finance-summary-value">$0</strong>
+            </article>
+
+            <article class="finance-summary-card">
+              <span class="dashboard-label">Gastos</span>
+              <strong id="finance-total-expense" class="finance-summary-value">$0</strong>
+            </article>
+
+            <article class="finance-summary-card">
+              <span class="dashboard-label">Cobros pendientes</span>
+              <strong id="finance-total-pending" class="finance-summary-value">$0</strong>
+            </article>
+
+            <article class="finance-summary-card finance-summary-card-accent">
+              <span class="dashboard-label">Balance</span>
+              <strong id="finance-balance" class="finance-summary-value">$0</strong>
+            </article>
+          </div>
+
+          <div class="money-progress-card">
+            <div class="money-progress-top">
+              <div>
+                <span class="dashboard-label">Avance hacia la meta</span>
+                <strong id="money-progress-amount" class="finance-summary-value">$0 de $0</strong>
+              </div>
+              <span id="money-progress-percent" class="pill">0%</span>
+            </div>
+
+            <div class="money-progress-bar" aria-hidden="true">
+              <span id="money-progress-fill" class="money-progress-fill"></span>
+            </div>
+
+            <p id="money-goal-caption" class="microcopy">
+              Registra ingresos para ver avance básico contra tu meta mensual.
+            </p>
+          </div>
+        </section>
+
+        <section class="panel money-movements-panel" aria-labelledby="money-movements-title">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Registro simple</p>
+              <h2 id="money-movements-title">Movimientos</h2>
+              <p class="section-support">
+                Registra ingresos, gastos y cobros pendientes en una capa ligera para tener visibilidad financiera rapida.
+              </p>
+            </div>
+            <span class="pill">Caja basica</span>
+          </div>
+
+          <form id="money-movement-form" class="money-movement-form">
+            <label class="field">
+              <span>Tipo</span>
+              <select id="money-movement-type" name="type" required>
+                <option value="ingreso">Ingreso</option>
+                <option value="gasto">Gasto</option>
+                <option value="cobro pendiente">Cobro pendiente</option>
+              </select>
+            </label>
+
+            <label class="field money-movement-concept-field">
+              <span>Concepto</span>
+              <input
+                id="money-movement-concept"
+                name="concept"
+                type="text"
+                maxlength="160"
+                placeholder="Ej. Pago cliente A"
+                required
+              >
+            </label>
+
+            <label class="field">
+              <span>Cantidad</span>
+              <input
+                id="money-movement-amount"
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                required
+              >
+            </label>
+
+            <label class="field">
+              <span>Fecha</span>
+              <input id="money-movement-date" name="date" type="date" required>
+            </label>
+
+            <label class="field money-movement-note-field">
+              <span>Nota opcional</span>
+              <textarea
+                id="money-movement-note"
+                name="note"
+                rows="3"
+                maxlength="220"
+                placeholder="Contexto breve del movimiento"
+              ></textarea>
+            </label>
+
+            <div class="inline-actions">
+              <button
+                id="save-money-movement-button"
+                type="submit"
+                class="button button-primary money-movement-save-button"
+                data-default-label="Guardar movimiento"
+              >
+                Guardar movimiento
+              </button>
+              <button
+                id="cancel-money-movement-edit"
+                type="button"
+                class="button button-secondary"
+                hidden
+              >
+                Cancelar edición
+              </button>
+              <p id="money-movement-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+            </div>
+          </form>
+
+          <div id="money-movements-list" class="compact-list" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <section id="projects-panel" class="panel projects-panel" aria-labelledby="projects-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Ejecucion estructurada</p>
+            <h2 id="projects-title">Proyectos activos</h2>
+            <p class="section-support">
+              Aquí viven solo los proyectos en marcha. Entran cuando activas una salida tipo proyecto y defines el primer paso real.
+            </p>
+          </div>
+          <span id="projects-active-counter" class="pill pill-accent">0 activos</span>
+        </div>
+
+        <div class="project-section-intro">
+          <p class="microcopy">
+            Para traer un proyecto aquí, actívalo desde una salida operativa de tipo proyecto y define el resultado buscado junto con la siguiente acción.
+          </p>
+          <p id="project-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+        </div>
+
+        <div class="project-section-group">
+          <div class="project-section-heading">
+            <h3>En marcha</h3>
+            <p>Solo proyectos comprometidos a ejecución real.</p>
+          </div>
+          <div id="projects-list" class="projects-list" aria-live="polite"></div>
+        </div>
+
+        <div id="projects-paused-section" class="project-section-group" hidden>
+          <div class="project-section-heading">
+            <h3>En pausa</h3>
+            <p>Siguen vivos, pero no cuentan como activos hasta reactivarlos.</p>
+          </div>
+          <div id="projects-paused-list" class="projects-list" aria-live="polite"></div>
+        </div>
+
+        <div id="projects-completed-section" class="project-section-group" hidden>
+          <div class="project-section-heading">
+            <h3>Completados</h3>
+            <p>Quedan visibles como registro, fuera del foco operativo actual.</p>
+          </div>
+          <div id="projects-completed-list" class="projects-list" aria-live="polite"></div>
+        </div>
+      </section>
+
+      </div>
+
+      <div
+        id="section-refineria"
+        class="app-view"
+        data-app-view="refineria"
+        role="tabpanel"
+        aria-labelledby="view-refineria-button"
+        aria-label="Vista Refinería"
+        hidden
+      >
+        <section class="panel capture-panel" aria-labelledby="capture-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Entrada rapida</p>
+            <h2 id="capture-title">Capturar idea</h2>
+            <p class="section-support">
+              Captura solo lo mínimo necesario para no romper el ritmo. El refinado viene después.
+            </p>
+          </div>
+          <span class="pill">Ligero y directo</span>
+        </div>
+
+        <form id="capture-form" class="capture-form">
+          <label class="field">
+            <span>Título</span>
+            <input
+              id="idea-title"
+              name="title"
+              type="text"
+              maxlength="120"
+              placeholder="Ej. Sistema simple para revisar prioridades"
+              required
+            >
+          </label>
+
+          <label class="field">
+            <span>Nota breve</span>
+            <textarea
+              id="idea-note"
+              name="note"
+              rows="3"
+              maxlength="280"
+              placeholder="Una nota corta para no perder el contexto"
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Fuente</span>
+            <input
+              id="idea-source"
+              name="source"
+              type="text"
+              maxlength="80"
+              placeholder="Libro, reunion, intuicion, cliente..."
+            >
+          </label>
+
+          <div class="capture-actions">
+            <button type="submit" class="button button-primary">Capturar idea</button>
+            <p class="microcopy">La idea entra con fecha automática y estado pendiente.</p>
+          </div>
+        </form>
+      </section>
+
+      <section id="inbox-panel" class="panel inbox-panel" aria-labelledby="inbox-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Vista principal</p>
+            <h2 id="inbox-title">Inbox</h2>
+            <p class="section-support">
+              Usa el buscador y los filtros para recorrer rápido lo pendiente, lo ya refinado y lo archivado.
+            </p>
+          </div>
+          <span id="ideas-counter" class="pill">0 ideas</span>
+        </div>
+
+        <div class="inbox-toolbar">
+          <label class="field inbox-search-field">
+            <span>Buscar idea</span>
+            <input
+              id="idea-search"
+              name="ideaSearch"
+              type="search"
+              placeholder="Buscar por título, nota o fuente"
+            >
+          </label>
+
+          <div class="status-filter-block" aria-label="Filtros por estado">
+            <button type="button" class="status-filter is-active" data-filter="todas">
+              Todas
+              <span id="count-all" class="status-filter-count">0</span>
+            </button>
+            <button type="button" class="status-filter" data-filter="pendiente">
+              Pendiente
+              <span id="count-pending" class="status-filter-count">0</span>
+            </button>
+            <button type="button" class="status-filter" data-filter="procesada">
+              Procesada
+              <span id="count-processed" class="status-filter-count">0</span>
+            </button>
+            <button type="button" class="status-filter" data-filter="archivada">
+              Archivada
+              <span id="count-archived" class="status-filter-count">0</span>
+            </button>
+          </div>
+        </div>
+
+        <p id="ideas-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+
+        <div id="ideas-list" class="ideas-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="outputs-panel" class="panel outputs-panel" aria-labelledby="outputs-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Conversión operativa</p>
+            <h2 id="outputs-title">Salidas operativas</h2>
+            <p class="section-support">
+              Cada idea procesada debe terminar aquí como una pieza más clara, útil y lista para usarse.
+            </p>
+          </div>
+          <span id="outputs-counter" class="pill">0 salidas</span>
+        </div>
+
+        <div id="outputs-list" class="outputs-list" aria-live="polite"></div>
+      </section>
+      </div>
+    </main>
+  </div>
+
+  <!--
+    El panel lateral sigue concentrando el procesamiento guiado.
+    En esta etapa se vuelve más explicativo para que la persona
+    entienda mejor como aterrizar una idea.
+  -->
+  <aside id="process-panel" class="process-panel" aria-hidden="true">
+    <div class="process-backdrop" data-close-panel="true"></div>
+
+    <section class="process-card" role="dialog" aria-modal="true" aria-labelledby="process-title">
+      <div class="process-header">
+        <div>
+          <p class="section-kicker">Procesamiento guiado</p>
+          <h2 id="process-title">Procesar idea</h2>
+        </div>
+        <button id="close-process-panel" class="icon-button" type="button" aria-label="Cerrar panel">
+          &times;
+        </button>
+      </div>
+
+      <div class="process-context">
+        <p class="context-label">Idea seleccionada</p>
+        <h3 id="process-idea-title">Sin idea seleccionada</h3>
+        <p id="process-idea-meta" class="context-meta"></p>
+      </div>
+
+      <div class="process-guide">
+        <div class="guide-card">
+          <p class="guide-title">Objetivo del procesamiento</p>
+          <p class="guide-text">
+            Convierte una idea suelta en algo más útil: una regla, una acción, un proyecto, una métrica o una rutina.
+          </p>
+        </div>
+        <div class="guide-card">
+          <p class="guide-title">Como pensar este formulario</p>
+          <p class="guide-text">
+            Primero aclara la necesidad real. Luego define para qué sirve. Al final aterriza la versión mínima operativa.
+          </p>
+        </div>
+      </div>
+
+      <form id="process-form" class="process-form">
+        <div class="form-block">
+          <div class="form-block-head">
+            <p class="context-label">Claridad base</p>
+            <p class="field-help">Define qué fricción concreta quieres resolver antes de decidir la forma final.</p>
+          </div>
+
+          <label class="field">
+            <span>Qué necesidad, fricción o carencia viene a resolver</span>
+            <select id="problem-field" name="problem" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="falta de claridad">Falta de claridad</option>
+              <option value="falta de estructura">Falta de estructura</option>
+              <option value="falta de guia">Falta de guía</option>
+              <option value="falta de seguimiento">Falta de seguimiento</option>
+              <option value="falta de practica">Falta de práctica</option>
+              <option value="falta de enfoque">Falta de enfoque</option>
+              <option value="falta de organizacion">Falta de organización</option>
+              <option value="falta de consistencia">Falta de consistencia</option>
+              <option value="saturacion">Saturación</option>
+              <option value="necesidad de aprendizaje">Necesidad de aprendizaje</option>
+              <option value="necesidad de acompanamiento">Necesidad de acompañamiento</option>
+              <option value="mejora de desempeno">Mejora de desempeño</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Piensa en el vacío real que esta idea viene a llenar: una falta, una fricción, una carencia o una necesidad.</small>
+          </label>
+
+          <label id="problem-custom-field-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente esa necesidad</span>
+            <input
+              id="problem-custom-field"
+              name="problemCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Necesidad de acompañar mejor una etapa de aprendizaje"
+            >
+            <small class="field-help">Usa tus palabras si la opcion sugerida no encaja bien.</small>
+          </label>
+
+          <label class="field">
+            <span>Para qué sirve</span>
+            <select id="purpose-field" name="purpose" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="aclarar">Aclarar</option>
+              <option value="organizar">Organizar</option>
+              <option value="ejecutar">Ejecutar</option>
+              <option value="aprender">Aprender</option>
+              <option value="guiar">Guiar</option>
+              <option value="acompanar">Acompañar</option>
+              <option value="practicar">Practicar</option>
+              <option value="desarrollar una habilidad">Desarrollar una habilidad</option>
+              <option value="dar seguimiento">Dar seguimiento</option>
+              <option value="estructurar un proceso">Estructurar un proceso</option>
+              <option value="mejorar desempeno">Mejorar desempeño</option>
+              <option value="tomar decisiones">Tomar decisiones</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Nombra la utilidad principal de la idea: qué función cumple realmente.</small>
+          </label>
+
+          <label id="purpose-custom-field-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente esa utilidad</span>
+            <input
+              id="purpose-custom-field"
+              name="purposeCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Estructurar un proceso formativo"
+            >
+            <small class="field-help">Usa tus palabras si la funcion principal no encaja en la lista.</small>
+          </label>
+        </div>
+
+        <div class="form-block form-block-grid">
+          <div class="form-block-head">
+            <p class="context-label">Ubicación operativa</p>
+            <p class="field-help">Estas decisiones ayudan a ubicar la idea donde realmente va a vivir y cuando conviene activarla.</p>
+          </div>
+
+          <label class="field">
+            <span>Área</span>
+            <select id="area-field" name="area" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="trabajo">Trabajo</option>
+              <option value="negocio">Negocio</option>
+              <option value="dinero">Dinero</option>
+              <option value="personal">Personal</option>
+              <option value="familia">Familia</option>
+              <option value="crianza">Crianza</option>
+              <option value="aprendizaje">Aprendizaje</option>
+              <option value="habilidades">Habilidades</option>
+              <option value="salud">Salud</option>
+              <option value="casa">Casa</option>
+              <option value="relaciones">Relaciones</option>
+              <option value="sistema general">Sistema general</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Indica en qué parte de tu vida o sistema vive principalmente esta idea.</small>
+          </label>
+
+          <label id="area-custom-field-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente esa área</span>
+            <input
+              id="area-custom-field"
+              name="areaCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Formación deportiva infantil"
+            >
+            <small class="field-help">Usa un texto propio si el territorio principal no aparece en la lista.</small>
+          </label>
+
+          <label class="field">
+            <span>Cuando aplica</span>
+            <select id="timing-field" name="timing" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="hoy">Hoy</option>
+              <option value="esta semana">Esta semana</option>
+              <option value="este mes">Este mes</option>
+              <option value="cuando se necesite">Cuando se necesite</option>
+              <option value="de forma continua">De forma continua</option>
+              <option value="por etapas">Por etapas</option>
+              <option value="practica recurrente">Práctica recurrente</option>
+              <option value="sistema general">Sistema general</option>
+              <option value="despues">Después</option>
+              <option value="incubadora">Incubadora</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Define si esta idea opera en un momento puntual, como proceso continuo o por etapas.</small>
+          </label>
+
+          <label id="timing-custom-field-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente cuando aplica</span>
+            <input
+              id="timing-custom-field"
+              name="timingCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Antes de cada sesión de práctica"
+            >
+            <small class="field-help">Usa tus palabras si el horizonte de uso necesita más precisión.</small>
+          </label>
+        </div>
+
+        <div class="form-block">
+          <div class="form-block-head">
+            <p class="context-label">Salida operativa</p>
+            <p class="field-help">No lo dejes en una intuición interesante. Bájalo a una pieza mínima lista para usar.</p>
+          </div>
+
+          <label class="field">
+            <span>Versión mínima</span>
+            <textarea
+              id="minimum-version-field"
+              name="minimumVersion"
+              rows="4"
+              maxlength="300"
+              placeholder="Describe la versión más simple que haría útil esta idea"
+              required
+            ></textarea>
+            <small class="field-help">Describe la forma más simple, usable y realista que podrías aplicar sin complicarla.</small>
+          </label>
+
+          <label class="field">
+            <span>Tipo de salida</span>
+            <select id="output-type-field" name="outputType" required>
+              <option value="">Selecciona una opcion</option>
+              <option value="regla">Regla</option>
+              <option value="accion">Acción</option>
+              <option value="proyecto">Proyecto</option>
+              <option value="metrica">Métrica</option>
+              <option value="rutina">Rutina</option>
+            </select>
+            <small class="field-help">Elige la forma operativa que mejor convierta la idea en uso real.</small>
+          </label>
+        </div>
+
+        <div class="process-actions">
+          <button type="submit" class="button button-primary">Guardar salida operativa</button>
+          <button id="cancel-process" type="button" class="button button-secondary">Cancelar</button>
+        </div>
+      </form>
+    </section>
+  </aside>
+
+  <aside id="idea-detail-panel" class="process-panel idea-detail-panel" aria-hidden="true">
+    <div class="process-backdrop" data-close-idea-detail-panel="true"></div>
+
+    <section class="process-card idea-detail-card" role="dialog" aria-modal="true" aria-labelledby="idea-detail-title">
+      <div class="process-header">
+        <div>
+          <p class="section-kicker">Detalle de idea</p>
+          <h2 id="idea-detail-title">Ver detalles</h2>
+        </div>
+        <button id="close-idea-detail-panel" class="icon-button" type="button" aria-label="Cerrar detalle de idea">
+          &times;
+        </button>
+      </div>
+
+      <div class="process-context">
+        <p class="context-label">Idea seleccionada</p>
+        <h3 id="idea-detail-context-title">Sin idea seleccionada</h3>
+        <p id="idea-detail-context-meta" class="context-meta"></p>
+      </div>
+
+      <div class="idea-detail-layout">
+        <section class="form-block idea-detail-block">
+          <div class="form-block-head">
+            <p class="context-label">Lectura completa</p>
+            <p class="field-help">Aquí puedes leer la idea sin límites de líneas ni truncamientos del inbox.</p>
+          </div>
+          <p id="idea-detail-description" class="idea-detail-description">Sin contenido ampliado.</p>
+        </section>
+
+        <section class="form-block idea-detail-block">
+          <div class="form-block-head">
+            <p class="context-label">Contexto de captura</p>
+            <p class="field-help">Resumen rápido de metadatos básicos para ubicar la idea dentro del inbox.</p>
+          </div>
+          <div id="idea-detail-meta-list" class="idea-detail-chip-grid"></div>
+        </section>
+
+        <section class="form-block idea-detail-block">
+          <div class="form-block-head">
+            <p class="context-label">Relación con la refinería</p>
+            <p class="field-help">Este bloque queda listo para crecer después con trazabilidad, notas ampliadas e historial.</p>
+          </div>
+          <div id="idea-detail-trace-list" class="idea-detail-trace-list"></div>
+        </section>
+      </div>
+
+      <div id="idea-detail-actions" class="process-actions idea-detail-actions"></div>
+      <p id="idea-detail-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+    </section>
+  </aside>
+
+  <aside id="project-edit-panel" class="process-panel project-edit-panel" aria-hidden="true">
+    <div class="process-backdrop" data-close-project-panel="true"></div>
+
+    <section class="process-card project-edit-card" role="dialog" aria-modal="true" aria-labelledby="project-edit-title">
+      <div class="process-header">
+        <div>
+          <p id="project-edit-kicker" class="section-kicker">Edición de proyecto</p>
+          <h2 id="project-edit-title">Editar proyecto activo</h2>
+        </div>
+        <button id="close-project-edit-panel" class="icon-button" type="button" aria-label="Cerrar edición de proyecto">
+          &times;
+        </button>
+      </div>
+
+      <div class="process-context">
+        <p id="project-edit-context-label" class="context-label">Proyecto seleccionado</p>
+        <h3 id="project-edit-context-title">Sin proyecto seleccionado</h3>
+        <p id="project-edit-context-meta" class="context-meta"></p>
+        <p id="project-edit-reference" class="field-help" hidden></p>
+      </div>
+
+      <div class="process-guide">
+        <div class="guide-card">
+          <p id="project-edit-guide-primary-title" class="guide-title">Qué puedes ajustar aquí</p>
+          <p id="project-edit-guide-primary-text" class="guide-text">
+            Puedes corregir el nombre, el resultado esperado y el siguiente paso para mantener el proyecto claro y movible.
+          </p>
+        </div>
+        <div class="guide-card">
+          <p id="project-edit-guide-secondary-title" class="guide-title">Coherencia operativa</p>
+          <p id="project-edit-guide-secondary-text" class="guide-text">
+            Si este proyecto viene de una salida operativa, actualizaremos también los datos más cercanos para mantener coherencia razonable.
+          </p>
+        </div>
+      </div>
+
+      <form id="project-edit-form" class="process-form">
+        <div class="form-block">
+          <div class="form-block-head">
+            <p class="context-label">Identidad del proyecto</p>
+            <p class="field-help">Ajusta cómo debe llamarse y qué resultado debe perseguir este proyecto dentro del sistema.</p>
+          </div>
+
+          <label class="field">
+            <span>Nombre</span>
+            <input
+              id="edit-project-name"
+              name="name"
+              type="text"
+              maxlength="120"
+              placeholder="Nombre claro del proyecto"
+              required
+            >
+          </label>
+
+          <label class="field">
+            <span>Resultado esperado</span>
+            <textarea
+              id="edit-project-result"
+              name="expectedResult"
+              rows="4"
+              maxlength="220"
+              placeholder="Qué debe estar logrado cuando este proyecto funcione"
+              required
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Siguiente acción</span>
+            <textarea
+              id="edit-project-next-action"
+              name="nextAction"
+              rows="4"
+              maxlength="220"
+              placeholder="El siguiente paso concreto para mover este proyecto"
+              required
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="form-block form-block-grid">
+          <div class="form-block-head">
+            <p id="project-edit-settings-label" class="context-label">Estado operativo</p>
+            <p id="project-edit-settings-help" class="field-help">Puedes cambiar prioridad, estado y área sin tener que borrar o recrear el proyecto.</p>
+          </div>
+
+          <label class="field">
+            <span>Prioridad</span>
+            <select id="edit-project-priority" name="priority" required>
+              <option value="alta">Alta</option>
+              <option value="media">Media</option>
+              <option value="baja">Baja</option>
+            </select>
+          </label>
+
+          <label id="edit-project-status-wrapper" class="field">
+            <span>Estado</span>
+            <select id="edit-project-status" name="status" required>
+              <option value="activo">Activo</option>
+              <option value="pausa">En pausa</option>
+              <option value="completado">Completado</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Área</span>
+            <select id="edit-project-area" name="area" required>
+              <option value="trabajo">Trabajo</option>
+              <option value="negocio">Negocio</option>
+              <option value="dinero">Dinero</option>
+              <option value="personal">Personal</option>
+              <option value="familia">Familia</option>
+              <option value="crianza">Crianza</option>
+              <option value="aprendizaje">Aprendizaje</option>
+              <option value="habilidades">Habilidades</option>
+              <option value="salud">Salud</option>
+              <option value="casa">Casa</option>
+              <option value="relaciones">Relaciones</option>
+              <option value="sistema general">Sistema general</option>
+              <option value="otro">Otro</option>
+            </select>
+          </label>
+
+          <label id="edit-project-area-custom-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente esa área</span>
+            <input
+              id="edit-project-area-custom"
+              name="areaCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Formación guiada en casa"
+            >
+            <small class="field-help">Usa tus palabras si el área del proyecto no aparece en la lista.</small>
+          </label>
+        </div>
+
+        <div class="process-actions">
+          <button
+            id="save-project-edit-button"
+            type="submit"
+            class="button button-primary output-save-button"
+            data-default-label="Guardar cambios"
+          >
+            Guardar cambios
+          </button>
+          <button id="cancel-project-edit" type="button" class="button button-secondary">Cancelar</button>
+          <p id="project-edit-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+  </aside>
+
+  <!--
+    Este panel permite editar una salida operativa ya creada
+    sin romper el flujo principal de captura y procesamiento.
+  -->
+  <aside id="output-edit-panel" class="process-panel output-edit-panel" aria-hidden="true">
+    <div class="process-backdrop" data-close-output-panel="true"></div>
+
+    <section class="process-card output-edit-card" role="dialog" aria-modal="true" aria-labelledby="output-edit-title">
+      <div class="process-header">
+        <div>
+          <p class="section-kicker">Edición operativa</p>
+          <h2 id="output-edit-title">Editar salida operativa</h2>
+        </div>
+        <button id="close-output-edit-panel" class="icon-button" type="button" aria-label="Cerrar edición">
+          &times;
+        </button>
+      </div>
+
+      <div class="process-context">
+        <p class="context-label">Salida seleccionada</p>
+        <h3 id="output-edit-context-title">Sin salida seleccionada</h3>
+        <p id="output-edit-context-meta" class="context-meta"></p>
+      </div>
+
+      <div class="process-guide">
+        <div class="guide-card">
+          <p class="guide-title">Qué puedes ajustar aquí</p>
+          <p class="guide-text">
+            Puedes corregir el título y refinar la pieza operativa para que quede más clara y más útil.
+          </p>
+        </div>
+        <div class="guide-card">
+          <p class="guide-title">Coherencia del sistema</p>
+          <p class="guide-text">
+            Si esta salida viene de una idea del inbox, actualizaremos también sus datos base para mantener consistencia.
+          </p>
+        </div>
+      </div>
+
+      <form id="output-edit-form" class="process-form">
+        <div class="form-block">
+          <div class="form-block-head">
+            <p class="context-label">Identidad de la idea</p>
+            <p class="field-help">Ajusta el nombre con el que esta idea debe vivir dentro de tu sistema.</p>
+          </div>
+
+          <label class="field">
+            <span>Título de la idea</span>
+            <input
+              id="edit-output-title"
+              name="ideaTitle"
+              type="text"
+              maxlength="120"
+              placeholder="Nombre claro y útil de la idea"
+              required
+            >
+            <small class="field-help">El título también se sincroniza con la idea original cuando existe.</small>
+          </label>
+        </div>
+
+        <div class="form-block">
+          <div class="form-block-head">
+            <p class="context-label">Claridad base</p>
+            <p class="field-help">Define con precisión el problema y la utilidad para que la salida no quede ambigua.</p>
+          </div>
+
+          <label class="field">
+            <span>Qué necesidad, fricción o carencia viene a resolver</span>
+            <select id="edit-output-problem" name="problem" required>
+              <option value="">Selecciona una opción</option>
+              <option value="falta de claridad">Falta de claridad</option>
+              <option value="falta de estructura">Falta de estructura</option>
+              <option value="falta de guia">Falta de guía</option>
+              <option value="falta de seguimiento">Falta de seguimiento</option>
+              <option value="falta de practica">Falta de práctica</option>
+              <option value="falta de enfoque">Falta de enfoque</option>
+              <option value="falta de organizacion">Falta de organización</option>
+              <option value="falta de consistencia">Falta de consistencia</option>
+              <option value="saturacion">Saturación</option>
+              <option value="necesidad de aprendizaje">Necesidad de aprendizaje</option>
+              <option value="necesidad de acompanamiento">Necesidad de acompañamiento</option>
+              <option value="mejora de desempeno">Mejora de desempeño</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Piensa en el vacío real que esta salida viene a llenar: una falta, una fricción, una carencia o una necesidad.</small>
+          </label>
+
+          <label id="edit-output-problem-custom-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente esa necesidad</span>
+            <input
+              id="edit-output-problem-custom"
+              name="problemCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Necesidad de acompañamiento continuo"
+            >
+            <small class="field-help">Usa un texto propio si la categoria sugerida no representa bien la salida.</small>
+          </label>
+
+          <label class="field">
+            <span>Para qué sirve</span>
+            <select id="edit-output-purpose" name="purpose" required>
+              <option value="">Selecciona una opción</option>
+              <option value="aclarar">Aclarar</option>
+              <option value="organizar">Organizar</option>
+              <option value="ejecutar">Ejecutar</option>
+              <option value="aprender">Aprender</option>
+              <option value="guiar">Guiar</option>
+              <option value="acompanar">Acompañar</option>
+              <option value="practicar">Practicar</option>
+              <option value="desarrollar una habilidad">Desarrollar una habilidad</option>
+              <option value="dar seguimiento">Dar seguimiento</option>
+              <option value="estructurar un proceso">Estructurar un proceso</option>
+              <option value="mejorar desempeno">Mejorar desempeño</option>
+              <option value="tomar decisiones">Tomar decisiones</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Nombra la utilidad principal de la salida: qué función cumple realmente.</small>
+          </label>
+
+          <label id="edit-output-purpose-custom-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente esa utilidad</span>
+            <input
+              id="edit-output-purpose-custom"
+              name="purposeCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Acompañar la práctica con retroalimentación"
+            >
+            <small class="field-help">Usa tus palabras si la función principal no encaja en la lista.</small>
+          </label>
+        </div>
+
+        <div class="form-block form-block-grid">
+          <div class="form-block-head">
+            <p class="context-label">Ubicación operativa</p>
+            <p class="field-help">Estas decisiones mantienen útil la salida y facilitan saber dónde usarla.</p>
+          </div>
+
+          <label class="field">
+            <span>Área</span>
+            <select id="edit-output-area" name="area" required>
+              <option value="">Selecciona una opción</option>
+              <option value="trabajo">Trabajo</option>
+              <option value="negocio">Negocio</option>
+              <option value="dinero">Dinero</option>
+              <option value="personal">Personal</option>
+              <option value="familia">Familia</option>
+              <option value="crianza">Crianza</option>
+              <option value="aprendizaje">Aprendizaje</option>
+              <option value="habilidades">Habilidades</option>
+              <option value="salud">Salud</option>
+              <option value="casa">Casa</option>
+              <option value="relaciones">Relaciones</option>
+              <option value="sistema general">Sistema general</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Indica en qué parte de tu vida o sistema vive principalmente esta salida.</small>
+          </label>
+
+          <label id="edit-output-area-custom-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente esa área</span>
+            <input
+              id="edit-output-area-custom"
+              name="areaCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. Aprendizaje guiado en casa"
+            >
+            <small class="field-help">Usa un texto propio si el territorio principal no aparece en la lista.</small>
+          </label>
+
+          <label class="field">
+            <span>Cuándo aplica</span>
+            <select id="edit-output-timing" name="timing" required>
+              <option value="">Selecciona una opción</option>
+              <option value="hoy">Hoy</option>
+              <option value="esta semana">Esta semana</option>
+              <option value="este mes">Este mes</option>
+              <option value="cuando se necesite">Cuando se necesite</option>
+              <option value="de forma continua">De forma continua</option>
+              <option value="por etapas">Por etapas</option>
+              <option value="practica recurrente">Práctica recurrente</option>
+              <option value="sistema general">Sistema general</option>
+              <option value="despues">Después</option>
+              <option value="incubadora">Incubadora</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="field-help">Define si esta salida opera en un momento puntual, como proceso continuo o por etapas.</small>
+          </label>
+
+          <label id="edit-output-timing-custom-wrapper" class="field conditional-field" hidden>
+            <span>Describe brevemente cuándo aplica</span>
+            <input
+              id="edit-output-timing-custom"
+              name="timingCustom"
+              type="text"
+              maxlength="140"
+              placeholder="Ej. En cada bloque de estudio o práctica"
+            >
+            <small class="field-help">Usa tus palabras si el horizonte de uso necesita más precisión.</small>
+          </label>
+        </div>
+
+        <div class="form-block">
+          <div class="form-block-head">
+            <p class="context-label">Pieza operativa</p>
+            <p class="field-help">Asegúrate de que esta salida quede lista para usarse, no solo guardada.</p>
+          </div>
+
+          <label class="field">
+            <span>Versión mínima</span>
+            <textarea
+              id="edit-output-minimum-version"
+              name="minimumVersion"
+              rows="4"
+              maxlength="300"
+              placeholder="Describe la versión mínima lista para usar"
+              required
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Tipo de salida</span>
+            <select id="edit-output-type" name="outputType" required>
+              <option value="">Selecciona una opción</option>
+              <option value="regla">Regla</option>
+              <option value="accion">Acción</option>
+              <option value="proyecto">Proyecto</option>
+              <option value="metrica">Métrica</option>
+              <option value="rutina">Rutina</option>
+            </select>
+            <small id="edit-output-type-lock-note" class="field-help" hidden>
+              Este tipo ya no se puede cambiar porque la salida fue activada como proyecto y debe mantenerse coherente con la operación real.
+            </small>
+          </label>
+        </div>
+
+        <div class="process-actions">
+          <button
+            id="save-output-edit-button"
+            type="submit"
+            class="button button-primary output-save-button"
+            data-default-label="Guardar cambios"
+          >
+            Guardar cambios
+          </button>
+          <button id="cancel-output-edit" type="button" class="button button-secondary">Cancelar</button>
+          <p id="output-edit-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+  </aside>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

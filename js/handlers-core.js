@@ -1,0 +1,800 @@
+/*
+  Handlers base: enfoque, acción del día, modo, revisión y eventos globales.
+*/
+
+import {
+  COPILOT_OPTIONS,
+  DEFAULT_COPILOT_PHRASE,
+  DEFAULT_COPILOT_TYPE,
+  OPERATION_MODES,
+  REVIEW_CONFIG,
+} from "./config.js";
+import { elements } from "./dom.js";
+import {
+  renderApp,
+  renderDashboard,
+  renderFocus,
+  renderReviews,
+  renderTodayAction,
+} from "./render-core.js";
+import {
+  closeIdeaDetailPanel,
+  closeOutputEditPanel,
+  closeProcessPanel,
+  closeProjectEditPanel,
+} from "./panels.js";
+import { appState, uiState } from "./state.js";
+import {
+  loadActiveAppView,
+  loadSectionLayout,
+  saveActiveAppView,
+  saveCopilotPreferences,
+  saveSectionLayout,
+  saveState,
+} from "./storage.js";
+import {
+  setFeedbackTimeout,
+  setFocusSaveButtonState,
+  setModeFeedback,
+  setReviewSaveButtonState,
+  setTodayActionSaveButtonState,
+} from "./ui-helpers.js";
+import { getModeLabel } from "./utils.js";
+
+let navigationHighlightTimeout = null;
+let pendingNavigationObserver = null;
+let activeHighlightedSection = null;
+const APP_VIEW_KEYS = ["panel-operativo", "operacion-diaria", "refineria"];
+const ACCORDION_SECTION_CONFIG = [
+  { key: "focus", selector: "#focus-panel", defaultOpen: true },
+  { key: "mode", selector: "#mode-panel", defaultOpen: true },
+  { key: "projects", selector: "#projects-panel", defaultOpen: false },
+  { key: "priorities", selector: "#priorities-panel", defaultOpen: false },
+  { key: "focusBlocks", selector: "#focus-blocks-panel", defaultOpen: false },
+  { key: "boss", selector: "#boss-panel", defaultOpen: false },
+  { key: "review", selector: "#review-panel", defaultOpen: false },
+  { key: "moneyGoal", selector: "#money-goal-panel", defaultOpen: false },
+  { key: "inbox", selector: "#inbox-panel", defaultOpen: true },
+  { key: "outputs", selector: "#outputs-panel", defaultOpen: false },
+];
+const DEFAULT_SECTION_LAYOUT = Object.fromEntries(
+  ACCORDION_SECTION_CONFIG.map((sectionConfig) => [
+    sectionConfig.key,
+    {
+      isOpen: sectionConfig.defaultOpen,
+      isPinned: false,
+    },
+  ])
+);
+const accordionRegistry = new Map();
+let sectionLayoutState = loadSectionLayout(DEFAULT_SECTION_LAYOUT);
+let activeAppView = loadActiveAppView("panel-operativo");
+
+function getSectionLayoutEntry(sectionKey) {
+  if (!sectionLayoutState[sectionKey]) {
+    sectionLayoutState[sectionKey] = {
+      isOpen: true,
+      isPinned: false,
+    };
+  }
+
+  if (typeof sectionLayoutState[sectionKey].isOpen !== "boolean") {
+    sectionLayoutState[sectionKey].isOpen = true;
+  }
+
+  // La versión simplificada elimina la fijación visual y neutraliza estados heredados.
+  sectionLayoutState[sectionKey].isPinned = false;
+
+  return sectionLayoutState[sectionKey];
+}
+
+function persistSectionLayoutState() {
+  saveSectionLayout(sectionLayoutState);
+}
+
+function getAppViewElement(viewKey) {
+  if (viewKey === "panel-operativo") {
+    return elements.panelOperativoView;
+  }
+
+  if (viewKey === "operacion-diaria") {
+    return elements.operacionDiariaView;
+  }
+
+  if (viewKey === "refineria") {
+    return elements.refineryView;
+  }
+
+  return null;
+}
+
+function syncAppViewState() {
+  APP_VIEW_KEYS.forEach((viewKey) => {
+    const viewElement = getAppViewElement(viewKey);
+    const isActive = viewKey === activeAppView;
+
+    if (viewElement) {
+      viewElement.hidden = !isActive;
+      viewElement.classList.toggle("is-active", isActive);
+    }
+  });
+
+  elements.appViewButtons.forEach((button) => {
+    const isActive = button.dataset.appViewTarget === activeAppView;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+    button.setAttribute("tabindex", isActive ? "0" : "-1");
+  });
+
+  document.body.dataset.appView = activeAppView;
+}
+
+export function setActiveSection(viewKey, options = {}) {
+  const { persist = true } = options;
+
+  if (!APP_VIEW_KEYS.includes(viewKey) || viewKey === activeAppView) {
+    if (persist && APP_VIEW_KEYS.includes(viewKey)) {
+      saveActiveAppView(viewKey);
+    }
+    return;
+  }
+
+  activeAppView = viewKey;
+  syncAppViewState();
+
+  if (persist) {
+    saveActiveAppView(viewKey);
+  }
+}
+
+export function setActiveAppView(viewKey, options = {}) {
+  setActiveSection(viewKey, options);
+}
+
+function getSectionViewKey(targetSection) {
+  return targetSection?.closest("[data-app-view]")?.dataset.appView || "panel-operativo";
+}
+
+function syncAccordionSectionState(sectionKey) {
+  const accordionEntry = accordionRegistry.get(sectionKey);
+
+  if (!accordionEntry) {
+    return;
+  }
+
+  const layoutEntry = getSectionLayoutEntry(sectionKey);
+  const { section, shell, sectionHead, chevron, sectionTitle } = accordionEntry;
+
+  section.classList.toggle("is-collapsed", !layoutEntry.isOpen);
+  section.classList.remove("is-pinned");
+  section.dataset.sectionOpen = String(layoutEntry.isOpen);
+  section.dataset.sectionPinned = "false";
+  shell.setAttribute("aria-hidden", String(!layoutEntry.isOpen));
+  shell.inert = !layoutEntry.isOpen;
+  sectionHead.setAttribute("aria-expanded", String(layoutEntry.isOpen));
+  sectionHead.setAttribute(
+    "aria-label",
+    layoutEntry.isOpen ? `Colapsar ${sectionTitle}` : `Expandir ${sectionTitle}`
+  );
+  chevron.dataset.state = layoutEntry.isOpen ? "open" : "closed";
+}
+
+function syncAllAccordionSections() {
+  accordionRegistry.forEach((_, sectionKey) => {
+    syncAccordionSectionState(sectionKey);
+  });
+}
+
+function openAccordionSection(sectionKey, options = {}) {
+  const { persist = true } = options;
+  const layoutEntry = getSectionLayoutEntry(sectionKey);
+
+  layoutEntry.isOpen = true;
+  syncAllAccordionSections();
+
+  if (persist) {
+    persistSectionLayoutState();
+  }
+}
+
+function closeAccordionSection(sectionKey, options = {}) {
+  const { persist = true } = options;
+  const layoutEntry = getSectionLayoutEntry(sectionKey);
+
+  layoutEntry.isOpen = false;
+  syncAccordionSectionState(sectionKey);
+
+  if (persist) {
+    persistSectionLayoutState();
+  }
+}
+
+function openAllAccordionSections() {
+  accordionRegistry.forEach((_, sectionKey) => {
+    const layoutEntry = getSectionLayoutEntry(sectionKey);
+    layoutEntry.isOpen = true;
+  });
+
+  syncAllAccordionSections();
+  persistSectionLayoutState();
+}
+
+function closeAllUnpinnedAccordionSections() {
+  accordionRegistry.forEach((_, sectionKey) => {
+    const layoutEntry = getSectionLayoutEntry(sectionKey);
+    layoutEntry.isOpen = false;
+  });
+  syncAllAccordionSections();
+  persistSectionLayoutState();
+}
+
+function toggleAccordionSection(sectionKey, options = {}) {
+  const { persist = true } = options;
+  const layoutEntry = getSectionLayoutEntry(sectionKey);
+
+  if (layoutEntry.isOpen) {
+    closeAccordionSection(sectionKey, { persist });
+    return;
+  }
+
+  openAccordionSection(sectionKey, { persist });
+}
+
+function ensureAccordionSectionVisible(targetSection) {
+  const sectionKey = targetSection?.dataset.sectionKey;
+
+  if (!sectionKey || !accordionRegistry.has(sectionKey)) {
+    return;
+  }
+
+  openAccordionSection(sectionKey, { persist: true });
+}
+
+function buildAccordionChevron() {
+  const chevron = document.createElement("span");
+  chevron.className = "accordion-chevron";
+  chevron.setAttribute("aria-hidden", "true");
+  return chevron;
+}
+
+function enhanceAccordionSection(sectionConfig) {
+  const section = document.querySelector(sectionConfig.selector);
+  const sectionHead = section?.querySelector(".section-head");
+  const sectionTitle = sectionHead?.querySelector("h2")?.textContent?.trim() || sectionConfig.key;
+
+  if (!section || !sectionHead) {
+    return;
+  }
+
+  section.dataset.sectionKey = sectionConfig.key;
+
+  let accordionShell = section.querySelector(".accordion-shell");
+  let accordionBody = section.querySelector(".accordion-body");
+
+  if (!accordionShell || !accordionBody) {
+    const sectionChildren = Array.from(section.children).filter((child) => child !== sectionHead);
+
+    accordionShell = document.createElement("div");
+    accordionBody = document.createElement("div");
+    accordionShell.className = "accordion-shell";
+    accordionBody.className = "accordion-body";
+
+    sectionChildren.forEach((child) => {
+      accordionBody.appendChild(child);
+    });
+
+    accordionShell.appendChild(accordionBody);
+    section.appendChild(accordionShell);
+  }
+
+  if (!accordionShell.id) {
+    accordionShell.id = `accordion-panel-${sectionConfig.key}`;
+  }
+
+  const mainContent = sectionHead.firstElementChild;
+
+  if (!mainContent) {
+    return;
+  }
+
+  sectionHead.querySelectorAll(".accordion-head-actions").forEach((node) => {
+    node.remove();
+  });
+
+  let chevron = sectionHead.querySelector(".accordion-chevron");
+
+  if (!chevron) {
+    chevron = buildAccordionChevron();
+  }
+
+  mainContent.classList.add("accordion-head-main");
+  sectionHead.classList.add("accordion-head-toggle");
+  sectionHead.dataset.sectionAction = "toggle";
+  sectionHead.dataset.sectionKey = sectionConfig.key;
+  sectionHead.setAttribute("role", "button");
+  sectionHead.setAttribute("tabindex", "0");
+  sectionHead.setAttribute("aria-controls", accordionShell.id);
+  sectionHead.appendChild(chevron);
+
+  accordionRegistry.set(sectionConfig.key, {
+    section,
+    shell: accordionShell,
+    sectionHead,
+    sectionTitle,
+    chevron,
+  });
+}
+
+export function initializeCollapsibleSections() {
+  ACCORDION_SECTION_CONFIG.forEach((sectionConfig) => {
+    enhanceAccordionSection(sectionConfig);
+  });
+
+  syncAllAccordionSections();
+}
+
+export function initializeWorkspaceViews() {
+  if (!APP_VIEW_KEYS.includes(activeAppView)) {
+    activeAppView = "panel-operativo";
+  }
+
+  syncAppViewState();
+}
+
+function clearSectionHighlight(targetSection) {
+  if (!targetSection) {
+    return;
+  }
+
+  targetSection.classList.remove("section-jump-highlight");
+}
+
+function highlightTargetSection(targetSection) {
+  if (!targetSection) {
+    return;
+  }
+
+  clearTimeout(navigationHighlightTimeout);
+  clearSectionHighlight(activeHighlightedSection);
+  clearSectionHighlight(targetSection);
+
+  // Fuerza el reinicio para que el resaltado pueda repetirse en clics consecutivos.
+  void targetSection.offsetWidth;
+  targetSection.classList.add("section-jump-highlight");
+  activeHighlightedSection = targetSection;
+
+  navigationHighlightTimeout = window.setTimeout(() => {
+    clearSectionHighlight(targetSection);
+    activeHighlightedSection = null;
+  }, 1800);
+}
+
+function navigateFromDashboardCard(card) {
+  const targetSelector = card?.dataset.scrollTarget;
+
+  if (!targetSelector) {
+    return;
+  }
+
+  const targetSection = document.querySelector(targetSelector);
+
+  if (!targetSection) {
+    return;
+  }
+
+  setActiveSection(getSectionViewKey(targetSection), {
+    persist: true,
+  });
+  ensureAccordionSectionVisible(targetSection);
+
+  if (pendingNavigationObserver) {
+    pendingNavigationObserver.disconnect();
+    pendingNavigationObserver = null;
+  }
+
+  if (!("IntersectionObserver" in window)) {
+    targetSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    window.setTimeout(() => {
+      highlightTargetSection(targetSection);
+    }, 350);
+    return;
+  }
+
+  pendingNavigationObserver = new IntersectionObserver(
+    (entries) => {
+      const matchingEntry = entries.find((entry) => entry.target === targetSection && entry.isIntersecting);
+
+      if (!matchingEntry) {
+        return;
+      }
+
+      highlightTargetSection(targetSection);
+      pendingNavigationObserver.disconnect();
+      pendingNavigationObserver = null;
+    },
+    {
+      threshold: 0.15,
+    }
+  );
+
+  pendingNavigationObserver.observe(targetSection);
+  targetSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+function setDashboardActionFeedback(message = "") {
+  uiState.dashboardActionFeedback = message;
+  renderDashboard();
+}
+
+function clearDashboardActionFeedbackSoon() {
+  setFeedbackTimeout("dashboardAction", () => {
+    uiState.dashboardActionFeedback = "";
+    renderDashboard();
+  }, 1800);
+}
+
+function clearDashboardActionCompletionSoon() {
+  setFeedbackTimeout("dashboardActionState", () => {
+    uiState.dashboardActionState = "idle";
+    uiState.dashboardLastCompletedText = "";
+    renderDashboard();
+  }, 1900);
+}
+
+function resetDashboardActionTransientState() {
+  uiState.dashboardActionState = "idle";
+  uiState.dashboardLastCompletedText = "";
+}
+
+function toggleCopilotEditor(nextOpenState = !uiState.isCopilotEditorOpen) {
+  uiState.isCopilotEditorOpen = Boolean(nextOpenState);
+  renderDashboard();
+
+  if (uiState.isCopilotEditorOpen && elements.dashboardGuidePhraseInput) {
+    requestAnimationFrame(() => {
+      elements.dashboardGuidePhraseInput.focus();
+      elements.dashboardGuidePhraseInput.select();
+    });
+  }
+}
+
+function getNextCopilotType(rawType = "") {
+  if (COPILOT_OPTIONS.some((copilot) => copilot.id === rawType)) {
+    return rawType;
+  }
+
+  if (COPILOT_OPTIONS.some((copilot) => copilot.id === DEFAULT_COPILOT_TYPE)) {
+    return DEFAULT_COPILOT_TYPE;
+  }
+
+  return COPILOT_OPTIONS[0]?.id || "cohete";
+}
+
+export function handleCopilotToggleClick(event) {
+  const toggleButton = event.target.closest("[data-copilot-edit-toggle]");
+
+  if (!toggleButton) {
+    return;
+  }
+
+  event.preventDefault();
+  toggleCopilotEditor();
+}
+
+export function handleCopilotSubmit(event) {
+  event.preventDefault();
+
+  const formData = new FormData(elements.dashboardGuideEditor);
+  const nextPhrase = String(formData.get("copilotPhrase") || "").trim() || DEFAULT_COPILOT_PHRASE;
+  const nextType = getNextCopilotType(String(formData.get("copilotType") || "").trim());
+
+  appState.copilot = {
+    type: nextType,
+    phrase: nextPhrase,
+  };
+
+  saveCopilotPreferences(appState.copilot);
+  toggleCopilotEditor(false);
+}
+
+function handleGlobalClick(event) {
+  if (!uiState.isCopilotEditorOpen) {
+    return;
+  }
+
+  if (event.target.closest("#dashboard-guide-card")) {
+    return;
+  }
+
+  toggleCopilotEditor(false);
+}
+
+export function handleDashboardActionClick(event) {
+  const actionButton = event.target.closest("[data-dashboard-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const action = actionButton.dataset.dashboardAction;
+  const hasTodayAction = Boolean(appState.todayAction);
+
+  if (action === "details") {
+    uiState.dashboardActionDetailsOpen = !uiState.dashboardActionDetailsOpen;
+    renderDashboard();
+    return;
+  }
+
+  if (!hasTodayAction) {
+    setDashboardActionFeedback("Define una acción clave antes de moverla.");
+    clearDashboardActionFeedbackSoon();
+    return;
+  }
+
+  if (action === "complete") {
+    uiState.dashboardLastCompletedText = appState.todayAction;
+    uiState.dashboardActionState = "completed";
+    appState.todayAction = "";
+    uiState.dashboardTodayActionPaused = false;
+    saveState(appState);
+    renderTodayAction();
+    setDashboardActionFeedback("Avance registrado");
+    clearDashboardActionFeedbackSoon();
+    clearDashboardActionCompletionSoon();
+    return;
+  }
+
+  if (action === "pause") {
+    uiState.dashboardTodayActionPaused = !uiState.dashboardTodayActionPaused;
+    uiState.dashboardActionState = "idle";
+    setDashboardActionFeedback(uiState.dashboardTodayActionPaused ? "Acción en pausa" : "Acción reanudada");
+    clearDashboardActionFeedbackSoon();
+  }
+}
+
+export function handleAppViewSwitchClick(event) {
+  const targetButton = event.target.closest("[data-app-view-target]");
+
+  if (!targetButton) {
+    return;
+  }
+
+  setActiveSection(targetButton.dataset.appViewTarget, {
+    persist: true,
+  });
+}
+
+export function handleFocusSubmit(event) {
+  event.preventDefault();
+
+  const formData = new FormData(elements.focusForm);
+
+  appState.focus = {
+    mission: String(formData.get("mission") || "").trim(),
+    weekFocus: String(formData.get("weekFocus") || "").trim(),
+  };
+
+  saveState(appState);
+  renderDashboard();
+  renderFocus();
+  setFocusSaveButtonState(true);
+  setFeedbackTimeout("focus", () => {
+    setFocusSaveButtonState(false);
+  });
+}
+
+export function handleTodayActionSubmit(event) {
+  event.preventDefault();
+
+  const formData = new FormData(elements.todayActionForm);
+  appState.todayAction = String(formData.get("todayAction") || "").trim();
+  resetDashboardActionTransientState();
+  uiState.dashboardTodayActionPaused = false;
+
+  saveState(appState);
+  renderTodayAction();
+  renderDashboard();
+  setTodayActionSaveButtonState(true, "Acción guardada");
+  setFeedbackTimeout("todayAction", () => {
+    setTodayActionSaveButtonState(false);
+  });
+}
+
+export function handleModeSelection(event) {
+  const modeButton = event.target.closest(".mode-option");
+
+  if (!modeButton) {
+    return;
+  }
+
+  const selectedMode = modeButton.dataset.mode;
+
+  if (!OPERATION_MODES[selectedMode]) {
+    return;
+  }
+
+  appState.currentMode = selectedMode;
+  saveState(appState);
+  renderApp();
+  setModeFeedback(`Modo guardado: ${getModeLabel(selectedMode)}`);
+  setFeedbackTimeout("mode", () => {
+    setModeFeedback("");
+  });
+}
+
+export function handleReviewTabClick(event) {
+  const reviewTabButton = event.target.closest(".review-tab");
+
+  if (!reviewTabButton) {
+    return;
+  }
+
+  const nextReviewTab = reviewTabButton.dataset.reviewTab;
+
+  if (!REVIEW_CONFIG[nextReviewTab]) {
+    return;
+  }
+
+  uiState.activeReviewTab = nextReviewTab;
+  renderReviews();
+}
+
+export function handleReviewSubmit(event) {
+  event.preventDefault();
+
+  const formData = new FormData(elements.reviewForm);
+  const currentReviewType = uiState.activeReviewTab;
+
+  appState.reviews[currentReviewType] = {
+    answerOne: String(formData.get("answerOne") || "").trim(),
+    answerTwo: String(formData.get("answerTwo") || "").trim(),
+    answerThree: String(formData.get("answerThree") || "").trim(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  saveState(appState);
+  renderReviews();
+  setReviewSaveButtonState(true, `${REVIEW_CONFIG[currentReviewType].label} guardada`);
+  setFeedbackTimeout("review", () => {
+    setReviewSaveButtonState(false);
+  });
+}
+
+export function handleGlobalKeydown(event) {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (uiState.isCopilotEditorOpen) {
+    toggleCopilotEditor(false);
+    return;
+  }
+
+  if (uiState.editingProjectId) {
+    closeProjectEditPanel();
+    return;
+  }
+
+  if (uiState.editingOutputId) {
+    closeOutputEditPanel();
+    return;
+  }
+
+  if (uiState.processingIdeaId) {
+    closeProcessPanel();
+  }
+}
+
+export function handleDashboardNavigationClick(event) {
+  if (event.target.closest("[data-dashboard-action]") || event.target.closest("#dashboard-action-details")) {
+    return;
+  }
+
+  const targetCard = event.target.closest(".dashboard-nav-card");
+
+  if (!targetCard) {
+    return;
+  }
+
+  navigateFromDashboardCard(targetCard);
+}
+
+export function handleDashboardNavigationKeydown(event) {
+  if (event.target.closest("[data-dashboard-action]") || event.target.closest("#dashboard-action-details")) {
+    return;
+  }
+
+  const targetCard = event.target.closest(".dashboard-nav-card");
+
+  if (!targetCard || (event.key !== "Enter" && event.key !== " ")) {
+    return;
+  }
+
+  event.preventDefault();
+  navigateFromDashboardCard(targetCard);
+}
+
+export function handleAccordionActionClick(event) {
+  const actionButton = event.target.closest("[data-section-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const sectionKey = actionButton.dataset.sectionKey;
+  const action = actionButton.dataset.sectionAction;
+
+  if (!sectionKey || !accordionRegistry.has(sectionKey)) {
+    return;
+  }
+
+  if (action === "toggle") {
+    toggleAccordionSection(sectionKey, {
+      persist: true,
+    });
+  }
+}
+
+export function handleAccordionActionKeydown(event) {
+  const actionHeader = event.target.closest('.section-head[data-section-action="toggle"]');
+
+  if (!actionHeader || (event.key !== "Enter" && event.key !== " ")) {
+    return;
+  }
+
+  event.preventDefault();
+  toggleAccordionSection(actionHeader.dataset.sectionKey, {
+    persist: true,
+  });
+}
+
+export function bindCoreEvents() {
+  elements.focusForm.addEventListener("submit", handleFocusSubmit);
+  elements.todayActionForm.addEventListener("submit", handleTodayActionSubmit);
+  elements.reviewForm.addEventListener("submit", handleReviewSubmit);
+  elements.reviewTabs.forEach((button) => {
+    button.addEventListener("click", handleReviewTabClick);
+  });
+  elements.modeOptions.forEach((button) => {
+    button.addEventListener("click", handleModeSelection);
+  });
+  elements.closeProcessPanelButton.addEventListener("click", closeProcessPanel);
+  elements.cancelProcessButton.addEventListener("click", closeProcessPanel);
+  elements.processBackdrop.addEventListener("click", closeProcessPanel);
+  elements.closeIdeaDetailPanelButton.addEventListener("click", closeIdeaDetailPanel);
+  elements.ideaDetailBackdrop.addEventListener("click", closeIdeaDetailPanel);
+  elements.closeOutputEditPanelButton.addEventListener("click", closeOutputEditPanel);
+  elements.cancelOutputEditButton.addEventListener("click", closeOutputEditPanel);
+  elements.outputEditBackdrop.addEventListener("click", closeOutputEditPanel);
+  elements.closeProjectEditPanelButton.addEventListener("click", closeProjectEditPanel);
+  elements.cancelProjectEditButton.addEventListener("click", closeProjectEditPanel);
+  elements.projectEditBackdrop.addEventListener("click", closeProjectEditPanel);
+  if (elements.workspace) {
+    elements.workspace.addEventListener("click", handleCopilotToggleClick);
+    elements.workspace.addEventListener("click", handleAccordionActionClick);
+    elements.workspace.addEventListener("keydown", handleAccordionActionKeydown);
+    elements.workspace.addEventListener("click", handleDashboardActionClick);
+    elements.workspace.addEventListener("click", handleDashboardNavigationClick);
+    elements.workspace.addEventListener("keydown", handleDashboardNavigationKeydown);
+  }
+  if (elements.dashboardGuideEditor) {
+    elements.dashboardGuideEditor.addEventListener("submit", handleCopilotSubmit);
+  }
+  if (elements.viewSwitcher) {
+    elements.viewSwitcher.addEventListener("click", handleAppViewSwitchClick);
+  }
+  if (elements.expandAllSectionsButton) {
+    elements.expandAllSectionsButton.addEventListener("click", openAllAccordionSections);
+  }
+  if (elements.collapseUnpinnedSectionsButton) {
+    elements.collapseUnpinnedSectionsButton.addEventListener("click", closeAllUnpinnedAccordionSections);
+  }
+  document.addEventListener("click", handleGlobalClick);
+  document.addEventListener("keydown", handleGlobalKeydown);
+}

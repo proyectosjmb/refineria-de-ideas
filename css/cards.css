@@ -1,0 +1,296 @@
+.mode-options {
+  display: grid;
+  gap: 12px;
+}
+
+.mode-option {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(95, 108, 118, 0.14);
+  background: rgba(250, 247, 241, 0.78);
+  color: #24303a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    0 10px 18px rgba(55, 44, 29, 0.08);
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.mode-option span {
+  color: #5d6a75;
+  font-size: 0.92rem;
+}
+
+.mode-option.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(87, 112, 93, 0.24);
+  background:
+    linear-gradient(180deg, rgba(111, 125, 95, 0.14), rgba(111, 125, 95, 0.08)),
+    rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 14px 24px rgba(55, 44, 29, 0.1);
+}
+
+.mode-option:hover,
+.mode-option:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(95, 108, 118, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 14px 24px rgba(55, 44, 29, 0.1);
+}
+
+.compact-list {
+  display: grid;
+  gap: 14px;
+}
+
+.mini-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: rgba(42, 56, 74, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 34px rgba(7, 12, 20, 0.22);
+  transition:
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
+}
+
+.mini-card.is-completed {
+  border-color: rgba(177, 188, 201, 0.18);
+  opacity: 0.92;
+}
+
+.mini-card.is-in-progress {
+  border-color: rgba(97, 212, 179, 0.2);
+}
+
+.mini-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.mini-card-title {
+  margin-bottom: 0;
+  font-size: 1.02rem;
+}
+
+.mini-card-body {
+  display: grid;
+  gap: 10px;
+}
+
+.mini-card-text {
+  margin-bottom: 0;
+  line-height: 1.55;
+  color: var(--muted);
+  white-space: pre-line;
+}
+
+.mini-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mini-card-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.mini-card-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 30px;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #dce6f0;
+  font-size: 0.84rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.mode-emphasis-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+  color: #ebf1f8;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mini-card.is-mode-featured {
+  transform: translateY(-1px);
+}
+
+body[data-mode="supervivencia"] .mini-card.is-mode-featured {
+  border-color: rgba(255, 214, 135, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 214, 135, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(42, 56, 74, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 22px 38px rgba(34, 24, 8, 0.22);
+}
+
+body[data-mode="supervivencia"] .mini-card.is-mode-featured .mode-emphasis-badge {
+  border-color: rgba(255, 214, 135, 0.22);
+  background: rgba(255, 214, 135, 0.12);
+  color: #fff0ca;
+}
+
+body[data-mode="supervivencia"] .mini-card.is-mode-muted {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 14px 24px rgba(7, 12, 20, 0.14);
+}
+
+body[data-mode="supervivencia"] .mini-card.is-mode-muted .mode-emphasis-badge {
+  color: #c5cfdb;
+}
+
+body[data-mode="avance"] .mini-card.is-mode-strategic {
+  border-color: rgba(97, 212, 179, 0.24);
+  background:
+    linear-gradient(180deg, rgba(97, 212, 179, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(42, 56, 74, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 22px 40px rgba(18, 53, 45, 0.2);
+}
+
+body[data-mode="avance"] .mini-card.is-mode-strategic .mode-emphasis-badge {
+  border-color: rgba(97, 212, 179, 0.22);
+  background: rgba(97, 212, 179, 0.12);
+  color: #dffbf3;
+}
+
+.focus-block-form {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.focus-block-name {
+  grid-column: span 3;
+}
+
+.boss-panel {
+  background: var(--panel-highlight);
+  border-color: rgba(255, 214, 135, 0.18);
+}
+
+.review-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.review-tab {
+  border: 1px solid rgba(95, 108, 118, 0.14);
+  background: rgba(250, 247, 241, 0.8);
+  color: #4b5964;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    0 10px 18px rgba(55, 44, 29, 0.08);
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.review-tab:hover,
+.review-tab:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(95, 108, 118, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 14px 24px rgba(55, 44, 29, 0.1);
+}
+
+.review-tab.is-active {
+  transform: translateY(-1px);
+  border-color: rgba(87, 112, 93, 0.24);
+  background:
+    linear-gradient(180deg, rgba(111, 125, 95, 0.14), rgba(111, 125, 95, 0.08)),
+    rgba(255, 255, 255, 0.9);
+  color: #24303a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 14px 24px rgba(55, 44, 29, 0.1);
+}
+
+.review-form {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.review-latest-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.review-latest-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 14px 24px rgba(7, 12, 20, 0.12);
+}
+
+.review-latest-content {
+  display: grid;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.review-latest-content p {
+  margin-bottom: 0;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.latest-empty {
+  color: var(--muted);
+}
+

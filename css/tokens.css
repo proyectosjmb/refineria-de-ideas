@@ -1,0 +1,76 @@
+:root {
+  /*
+    Variables globales del diseno.
+    Tenerlas centralizadas ayuda a mantener una identidad visual
+    coherente sin tocar cada bloque por separado.
+  */
+  --bg: #d7ebf5;
+  --bg-soft: #e3f1f8;
+  --panel: rgba(34, 45, 60, 0.98);
+  --panel-strong: #2a384a;
+  --panel-highlight: rgba(40, 54, 71, 0.98);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --text: #f4f7fb;
+  --muted: #b1bcc9;
+  --accent: #61d4b3;
+  --accent-strong: #80e7c9;
+  --danger: #ff6b6b;
+  --warning: #ffd687;
+  --success: #78e0c0;
+  --shadow: 0 24px 56px rgba(7, 12, 20, 0.34);
+  --shadow-soft: 0 18px 32px rgba(8, 13, 22, 0.26);
+  --shadow-strong: 0 34px 78px rgba(3, 7, 13, 0.42);
+  --option-bg: #1d2a38;
+  --option-bg-hover: #253648;
+  --option-bg-selected: #2f4359;
+  --option-text: #eef4fb;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  --font-ui: "Segoe UI Variable", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --topbar-background-image: url("../assets/topbar-texture.png");
+  --topbar-background-size: 120%;
+  --topbar-background-position: center;
+  --background-overlay-opacity: 0.22;
+  --topbar-surface: rgba(255, 255, 255, 0.68);
+  --topbar-surface-strong: rgba(255, 255, 255, 0.78);
+  --topbar-border: rgba(118, 138, 151, 0.2);
+  --topbar-shadow: 0 18px 34px rgba(59, 73, 82, 0.1);
+  --topbar-text: #24303a;
+  --topbar-muted: #5d6a75;
+  --topbar-kicker: #6f7d5f;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-ui);
+  background-color: var(--bg);
+  background-image: var(--topbar-background-image);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center top;
+  color: var(--text);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
