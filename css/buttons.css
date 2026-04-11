@@ -85,6 +85,17 @@
   --button-color: #40515d;
 }
 
+.button-ghost {
+  --button-bg: rgba(255, 255, 255, 0.08);
+  --button-hover-bg: rgba(255, 255, 255, 0.14);
+  --button-active-bg: rgba(255, 255, 255, 0.12);
+  --button-border: rgba(95, 108, 118, 0.14);
+  --button-hover-border: rgba(95, 108, 118, 0.22);
+  --button-color: #33424d;
+  --button-shadow: none;
+  --button-shadow-hover: none;
+}
+
 .review-tabs {
   display: inline-flex;
   align-items: center;

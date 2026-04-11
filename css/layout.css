@@ -68,6 +68,138 @@
   color: var(--topbar-muted);
 }
 
+.topbar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 420px);
+  gap: 20px;
+  align-items: start;
+}
+
+.topbar-copy {
+  min-width: 0;
+}
+
+.auth-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(95, 108, 118, 0.14);
+  border-radius: 22px;
+  background: var(--topbar-surface-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 16px 28px rgba(55, 44, 29, 0.08);
+}
+
+.auth-panel-head,
+.auth-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-panel-head h2 {
+  margin-bottom: 0;
+  font-size: 1.16rem;
+  color: #24303a;
+}
+
+.auth-status-pill {
+  color: #3b4a56;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.auth-status-pill[data-auth-state="signed-in"] {
+  color: #214336;
+  border-color: rgba(87, 112, 93, 0.22);
+  background: rgba(227, 242, 233, 0.88);
+}
+
+.auth-status-text,
+.auth-mode-help,
+.auth-migration-meta {
+  margin-bottom: 0;
+  color: #5d6a75;
+  line-height: 1.5;
+}
+
+.auth-user-label,
+.auth-field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6c7a66;
+}
+
+.auth-user-email {
+  color: #24303a;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.auth-form,
+.auth-store-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-field {
+  display: grid;
+  gap: 6px;
+}
+
+.auth-field input,
+.auth-field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(95, 108, 118, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #24303a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.84),
+    0 8px 16px rgba(55, 44, 29, 0.06);
+}
+
+.auth-field input:focus,
+.auth-field select:focus {
+  outline: 2px solid rgba(111, 125, 95, 0.28);
+  outline-offset: 2px;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.auth-actions > .button {
+  flex: 1 1 0;
+}
+
+.auth-migrate-button {
+  width: 100%;
+}
+
+.auth-feedback {
+  color: #50605d;
+}
+
+.auth-feedback[data-feedback-type="success"].is-visible {
+  color: #214336;
+}
+
+.auth-feedback[data-feedback-type="warning"].is-visible {
+  color: #8b6a38;
+}
+
+.auth-feedback[data-feedback-type="error"].is-visible {
+  color: #8a3c3c;
+}
+
 .view-switcher {
   display: inline-flex;
   align-items: center;

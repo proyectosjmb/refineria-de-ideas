@@ -74,6 +74,20 @@ export function createInitialState() {
 
 export const appState = createInitialState();
 
+export const sessionState = {
+  authReady: false,
+  authUser: null,
+  authBusy: false,
+  migrationBusy: false,
+  firebaseConfigured: false,
+  persistenceMode: "local",
+  authFeedback: "",
+  authFeedbackType: "info",
+  storeStatus: "idle",
+  storeMessage: "",
+  migrationMeta: null,
+};
+
 export const uiState = {
   processingIdeaId: null,
   viewingIdeaId: null,

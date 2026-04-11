@@ -1,4 +1,8 @@
 @media (max-width: 980px) {
+  .topbar-layout {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-grid,
   .dashboard-grid-mini,
   .dashboard-direction-grid,
@@ -84,6 +88,21 @@
     padding: 24px 20px 30px;
     border-radius: 28px;
     margin-bottom: 16px;
+  }
+
+  .auth-panel-head,
+  .auth-user-row,
+  .auth-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .auth-actions > .button {
+    width: 100%;
+  }
+
+  .auth-user-email {
+    text-align: left;
   }
 
   .view-switcher {

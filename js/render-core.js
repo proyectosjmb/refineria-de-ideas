@@ -9,6 +9,7 @@ import {
   MAX_ACTIVE_PRIORITIES,
   MAX_ACTIVE_PROJECTS,
   OPERATION_MODES,
+  PERSISTENCE_MODES,
   REVIEW_CONFIG,
 } from "./config.js";
 import { elements } from "./dom.js";
@@ -19,6 +20,7 @@ import {
   getActiveProjectsCount,
   getFinanceSummary,
   getMoneyGoalProgress,
+  sessionState,
   uiState,
 } from "./state.js";
 import {
@@ -49,15 +51,100 @@ import {
   renderProjectEditPanel,
 } from "./panels.js";
 
-export function renderFocus() {
-  elements.focusMissionField.value = appState.focus.mission || "";
-  elements.focusWeekField.value = appState.focus.weekFocus || "";
-}
-
 function setTextIfPresent(target, value) {
   if (target) {
     target.textContent = value;
   }
+}
+
+function getAuthStatusLabel() {
+  if (!sessionState.firebaseConfigured) {
+    return "Config pendiente";
+  }
+
+  if (!sessionState.authReady) {
+    return "Conectando";
+  }
+
+  return sessionState.authUser ? "Sesion activa" : "Sin sesion";
+}
+
+function getMigrationSummary() {
+  const migrationMeta = sessionState.migrationMeta?.migration?.ideasOutputsProjects;
+
+  if (!migrationMeta) {
+    return "Aun no hay una marca remota de migracion para ideas, salidas y proyectos.";
+  }
+
+  const migratedAt = migrationMeta.migratedAt ? formatDate(migrationMeta.migratedAt) : "sin fecha";
+  const counts = migrationMeta.counts || {};
+
+  return `Migracion ${migrationMeta.status || "registrada"} | ${migratedAt} | ideas ${counts.ideas || 0} | salidas ${counts.outputs || 0} | proyectos ${counts.projects || 0}`;
+}
+
+export function renderAuthPanel() {
+  const selectedMode = PERSISTENCE_MODES[sessionState.persistenceMode] || PERSISTENCE_MODES.local;
+  const storeMessage = sessionState.storeMessage || "Sin tareas remotas pendientes.";
+
+  setTextIfPresent(elements.authStatusPill, getAuthStatusLabel());
+  setTextIfPresent(elements.authStatusText, storeMessage);
+  setTextIfPresent(elements.authUserEmail, sessionState.authUser?.email || "Sin sesion");
+  setTextIfPresent(elements.authModeHelp, selectedMode.helpText);
+  setTextIfPresent(elements.authFeedback, sessionState.authFeedback || "");
+  setTextIfPresent(elements.authMigrationMeta, getMigrationSummary());
+
+  if (elements.authFeedback) {
+    elements.authFeedback.classList.toggle("is-visible", Boolean(sessionState.authFeedback));
+    elements.authFeedback.dataset.feedbackType = sessionState.authFeedbackType || "info";
+  }
+
+  if (elements.authStatusPill) {
+    elements.authStatusPill.dataset.authState = sessionState.authUser ? "signed-in" : "signed-out";
+  }
+
+  if (elements.persistenceModeSelect) {
+    elements.persistenceModeSelect.value = sessionState.persistenceMode;
+    elements.persistenceModeSelect.disabled = sessionState.authBusy || sessionState.migrationBusy;
+  }
+
+  if (elements.authEmailField) {
+    elements.authEmailField.disabled = sessionState.authBusy || sessionState.migrationBusy;
+  }
+
+  if (elements.authPasswordField) {
+    elements.authPasswordField.disabled = sessionState.authBusy || sessionState.migrationBusy;
+  }
+
+  if (elements.authLoginButton) {
+    elements.authLoginButton.disabled =
+      !sessionState.firebaseConfigured || sessionState.authBusy || sessionState.migrationBusy;
+  }
+
+  if (elements.authRegisterButton) {
+    elements.authRegisterButton.disabled =
+      !sessionState.firebaseConfigured || sessionState.authBusy || sessionState.migrationBusy;
+  }
+
+  if (elements.authLogoutButton) {
+    elements.authLogoutButton.hidden = !sessionState.authUser;
+    elements.authLogoutButton.disabled = sessionState.authBusy || sessionState.migrationBusy;
+  }
+
+  if (elements.authMigrationButton) {
+    elements.authMigrationButton.disabled =
+      !sessionState.firebaseConfigured
+      || !sessionState.authUser
+      || sessionState.authBusy
+      || sessionState.migrationBusy;
+    elements.authMigrationButton.textContent = sessionState.migrationBusy
+      ? "Migrando..."
+      : "Migrar ideas, salidas y proyectos";
+  }
+}
+
+export function renderFocus() {
+  elements.focusMissionField.value = appState.focus.mission || "";
+  elements.focusWeekField.value = appState.focus.weekFocus || "";
 }
 
 function getDaySeed() {
@@ -420,6 +507,7 @@ export function renderCounters() {
 }
 
 export function renderApp() {
+  renderAuthPanel();
   renderDashboard();
   renderModes();
   renderModeStatus();

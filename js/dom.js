@@ -4,6 +4,21 @@
 */
 
 export const elements = {
+  authPanel: document.querySelector("#auth-panel"),
+  authForm: document.querySelector("#auth-form"),
+  authEmailField: document.querySelector("#auth-email"),
+  authPasswordField: document.querySelector("#auth-password"),
+  authLoginButton: document.querySelector("#auth-login-button"),
+  authRegisterButton: document.querySelector("#auth-register-button"),
+  authLogoutButton: document.querySelector("#auth-logout-button"),
+  authStatusPill: document.querySelector("#auth-status-pill"),
+  authStatusText: document.querySelector("#auth-status-text"),
+  authUserEmail: document.querySelector("#auth-user-email"),
+  authFeedback: document.querySelector("#auth-feedback"),
+  authModeHelp: document.querySelector("#auth-mode-help"),
+  authMigrationMeta: document.querySelector("#auth-migration-meta"),
+  authMigrationButton: document.querySelector("#auth-migrate-button"),
+  persistenceModeSelect: document.querySelector("#persistence-mode-select"),
   viewSwitcher: document.querySelector(".view-switcher"),
   appViewButtons: document.querySelectorAll("[data-app-view-target]"),
   panelOperativoView: document.querySelector("#section-panel-operativo"),

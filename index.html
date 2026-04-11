@@ -31,12 +31,104 @@
   -->
   <div class="app-shell">
     <header class="topbar">
-      <div>
-        <p class="eyebrow">Sistema local-first</p>
-        <h1>Refinería de Ideas</h1>
-        <p class="subtitle">
-          Captura ideas rápido, conviértelas en decisiones operativas y sostén el ritmo diario del sistema.
-        </p>
+      <div class="topbar-layout">
+        <div class="topbar-copy">
+          <p class="eyebrow">Sistema local-first</p>
+          <h1>Refineria de Ideas</h1>
+          <p class="subtitle">
+            Captura ideas rapido, conviertelas en decisiones operativas y sosten el ritmo diario del sistema.
+          </p>
+        </div>
+
+        <aside id="auth-panel" class="auth-panel" aria-labelledby="auth-panel-title">
+          <div class="auth-panel-head">
+            <div>
+              <p class="eyebrow">Cuenta y sincronizacion</p>
+              <h2 id="auth-panel-title">Sesion y persistencia</h2>
+            </div>
+            <span id="auth-status-pill" class="pill auth-status-pill">Conectando</span>
+          </div>
+
+          <p id="auth-status-text" class="auth-status-text">Sin tareas remotas pendientes.</p>
+
+          <div class="auth-user-row">
+            <span class="auth-user-label">Usuario</span>
+            <strong id="auth-user-email" class="auth-user-email">Sin sesion</strong>
+          </div>
+
+          <form id="auth-form" class="auth-form">
+            <label class="auth-field" for="auth-email">
+              <span class="auth-field-label">Correo</span>
+              <input id="auth-email" name="email" type="email" autocomplete="email" placeholder="tu@correo.com">
+            </label>
+
+            <label class="auth-field" for="auth-password">
+              <span class="auth-field-label">Contrasena</span>
+              <input
+                id="auth-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Minimo 6 caracteres"
+              >
+            </label>
+
+            <div class="auth-actions">
+              <button
+                id="auth-login-button"
+                type="submit"
+                class="button"
+                data-auth-action="login"
+              >
+                Entrar
+              </button>
+              <button
+                id="auth-register-button"
+                type="submit"
+                class="button button-secondary"
+                data-auth-action="register"
+              >
+                Crear cuenta
+              </button>
+              <button
+                id="auth-logout-button"
+                type="button"
+                class="button button-ghost"
+                hidden
+              >
+                Cerrar sesion
+              </button>
+            </div>
+          </form>
+
+          <div class="auth-store-controls">
+            <label class="auth-field" for="persistence-mode-select">
+              <span class="auth-field-label">Modo de persistencia</span>
+              <select id="persistence-mode-select" name="persistenceMode">
+                <option value="local">local</option>
+                <option value="dual">dual</option>
+                <option value="remote">remote</option>
+              </select>
+            </label>
+
+            <p id="auth-mode-help" class="auth-mode-help">
+              Lee y guarda solo en este navegador.
+            </p>
+
+            <button
+              id="auth-migrate-button"
+              type="button"
+              class="button button-secondary auth-migrate-button"
+            >
+              Migrar ideas, salidas y proyectos
+            </button>
+          </div>
+
+          <p id="auth-migration-meta" class="auth-migration-meta">
+            Aun no hay una marca remota de migracion para ideas, salidas y proyectos.
+          </p>
+          <p id="auth-feedback" class="microcopy save-feedback auth-feedback" aria-live="polite"></p>
+        </aside>
       </div>
     </header>
 
@@ -1793,6 +1885,14 @@
     </section>
   </aside>
 
+  <script>
+    window.__REFINERIA_FIREBASE_CONFIG__ = window.__REFINERIA_FIREBASE_CONFIG__ || {
+      apiKey: "",
+      authDomain: "",
+      projectId: "",
+      appId: "",
+    };
+  </script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

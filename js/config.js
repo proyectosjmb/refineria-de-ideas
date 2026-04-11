@@ -4,6 +4,23 @@
 */
 
 export const STORAGE_KEY = "refineria-ideas-v1";
+export const PERSISTENCE_MODES = {
+  local: {
+    id: "local",
+    label: "Local",
+    helpText: "Lee y guarda solo en este navegador.",
+  },
+  dual: {
+    id: "dual",
+    label: "Dual",
+    helpText: "Mantiene respaldo local y sincroniza ideas, salidas y proyectos en Firestore.",
+  },
+  remote: {
+    id: "remote",
+    label: "Remoto",
+    helpText: "Toma ideas, salidas y proyectos desde Firestore al cargar.",
+  },
+};
 export const MAX_ACTIVE_PROJECTS = 3;
 export const MAX_ACTIVE_PRIORITIES = 3;
 export const MAX_ACTIVE_FOCUS_BLOCKS = 2;

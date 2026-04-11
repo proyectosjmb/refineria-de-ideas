@@ -3,6 +3,7 @@
   Hidrata el estado, conecta eventos y pinta la app modular.
 */
 
+import { bindAuthEvents, initializeAuthState } from "./handlers-auth.js";
 import {
   bindCoreEvents,
   initializeCollapsibleSections,
@@ -34,29 +35,37 @@ import {
   setTodayActionSaveButtonState,
 } from "./ui-helpers.js";
 
-replaceAppState(loadState());
-initializeCollapsibleSections();
-initializeWorkspaceViews();
+async function bootstrapApp() {
+  replaceAppState(await loadState());
+  initializeCollapsibleSections();
+  initializeWorkspaceViews();
 
-bindCoreEvents();
-bindFinanceEvents();
-bindIdeasEvents();
-bindOperacionEvents();
+  bindAuthEvents();
+  bindCoreEvents();
+  bindFinanceEvents();
+  bindIdeasEvents();
+  bindOperacionEvents();
 
-resetMoneyMovementForm();
-setFocusSaveButtonState(false);
-setTodayActionSaveButtonState(false);
-setMoneyGoalSaveButtonState(false);
-setMoneyMovementSaveButtonState(false);
-setProjectEditSaveButtonState(false);
-setPrioritySaveButtonState(false);
-setFocusBlockSaveButtonState(false);
-setBossSaveButtonState(false);
-setReviewSaveButtonState(false);
-setOutputSaveButtonState(false);
-setModeFeedback("");
-setProjectFeedback("");
+  resetMoneyMovementForm();
+  setFocusSaveButtonState(false);
+  setTodayActionSaveButtonState(false);
+  setMoneyGoalSaveButtonState(false);
+  setMoneyMovementSaveButtonState(false);
+  setProjectEditSaveButtonState(false);
+  setPrioritySaveButtonState(false);
+  setFocusBlockSaveButtonState(false);
+  setBossSaveButtonState(false);
+  setReviewSaveButtonState(false);
+  setOutputSaveButtonState(false);
+  setModeFeedback("");
+  setProjectFeedback("");
 
-renderFocus();
-renderTodayAction();
-renderApp();
+  renderFocus();
+  renderTodayAction();
+  renderApp();
+  await initializeAuthState();
+}
+
+bootstrapApp().catch((error) => {
+  console.error("No se pudo iniciar la app.", error);
+});
