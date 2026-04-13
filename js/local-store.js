@@ -106,6 +106,7 @@ function sanitizeIdeaRecord(idea = {}) {
     title,
     note: normalizeString(idea.note),
     source: normalizeString(idea.source),
+    supportDocUrl: normalizeString(idea.supportDocUrl),
     createdAt: getSafeIsoTimestamp(idea.createdAt),
     status,
     processing,

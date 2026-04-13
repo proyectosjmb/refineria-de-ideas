@@ -76,7 +76,6 @@ export function renderIdeas() {
         ? `<p class="idea-note">${escapeHtml(idea.note)}</p>`
         : `<p class="idea-note">Sin nota breve.</p>`;
       const isArchived = idea.status === "archivada";
-      const archiveButtonLabel = isArchived ? "Archivada" : "Archivar";
 
       return `
         <article class="idea-card">
@@ -122,23 +121,6 @@ export function renderIdeas() {
               ${isArchived ? "disabled" : ""}
             >
               Procesar
-            </button>
-            <button
-              class="action-button action-button-secondary"
-              type="button"
-              data-action="archive"
-              data-id="${idea.id}"
-              ${isArchived ? "disabled" : ""}
-            >
-              ${archiveButtonLabel}
-            </button>
-            <button
-              class="action-button action-button-danger"
-              type="button"
-              data-action="delete"
-              data-id="${idea.id}"
-            >
-              Eliminar
             </button>
           </div>
         </article>

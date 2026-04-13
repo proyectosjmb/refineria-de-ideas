@@ -1459,6 +1459,41 @@
 
         <section class="form-block idea-detail-block">
           <div class="form-block-head">
+            <p class="context-label">Documento de apoyo</p>
+            <p class="field-help">Vincula cualquier documento externo para desarrollar esta idea sin cargar visualmente el inbox.</p>
+          </div>
+          <p id="idea-support-doc-status" class="microcopy idea-support-doc-status">Aun no hay documento vinculado.</p>
+          <form id="idea-support-doc-form" class="stack-form" novalidate>
+            <label class="field">
+              <span>URL externa</span>
+              <input
+                id="idea-support-doc-url"
+                name="supportDocUrl"
+                type="url"
+                inputmode="url"
+                autocomplete="url"
+                placeholder="https://..."
+              >
+              <small class="field-help">Puedes usar la herramienta que prefieras mientras el enlace sea una URL completa.</small>
+            </label>
+            <div class="inline-actions idea-support-doc-actions">
+              <button id="save-idea-support-doc" type="submit" class="button button-primary">Guardar enlace</button>
+              <a
+                id="open-idea-support-doc"
+                class="button button-secondary"
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+                hidden
+              >
+                Abrir documento
+              </a>
+            </div>
+          </form>
+        </section>
+
+        <section class="form-block idea-detail-block">
+          <div class="form-block-head">
             <p class="context-label">Contexto de captura</p>
             <p class="field-help">Resumen rápido de metadatos básicos para ubicar la idea dentro del inbox.</p>
           </div>

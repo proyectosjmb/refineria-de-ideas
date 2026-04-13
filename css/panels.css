@@ -193,6 +193,14 @@
   gap: 10px;
 }
 
+.idea-support-doc-status {
+  margin-bottom: 0;
+}
+
+.idea-support-doc-actions {
+  align-items: center;
+}
+
 .idea-detail-trace-list {
   display: grid;
   gap: 12px;

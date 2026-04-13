@@ -45,6 +45,44 @@ function buildIdeaDetailMetaHtml(currentIdea) {
   ].join("");
 }
 
+function normalizeSupportDocUrl(value = "") {
+  return String(value || "").trim();
+}
+
+function isExternalDocumentUrl(value = "") {
+  return /^https?:\/\//i.test(normalizeSupportDocUrl(value));
+}
+
+function syncIdeaSupportDocSection(currentIdea = null) {
+  if (!elements.ideaSupportDocStatus || !elements.ideaSupportDocUrlField || !elements.openIdeaSupportDocLink) {
+    return;
+  }
+
+  if (!currentIdea) {
+    elements.ideaSupportDocStatus.textContent = "Aun no hay documento vinculado.";
+    elements.ideaSupportDocUrlField.value = "";
+    elements.openIdeaSupportDocLink.hidden = true;
+    elements.openIdeaSupportDocLink.href = "#";
+    return;
+  }
+
+  const supportDocUrl = normalizeSupportDocUrl(currentIdea.supportDocUrl);
+  const hasValidSupportDoc = isExternalDocumentUrl(supportDocUrl);
+
+  elements.ideaSupportDocUrlField.value = supportDocUrl;
+
+  if (!supportDocUrl) {
+    elements.ideaSupportDocStatus.textContent = "Aun no hay documento vinculado.";
+  } else if (hasValidSupportDoc) {
+    elements.ideaSupportDocStatus.textContent = "Documento vinculado y listo para abrir.";
+  } else {
+    elements.ideaSupportDocStatus.textContent = "La URL guardada necesita revisarse antes de abrirse.";
+  }
+
+  elements.openIdeaSupportDocLink.hidden = !hasValidSupportDoc;
+  elements.openIdeaSupportDocLink.href = hasValidSupportDoc ? supportDocUrl : "#";
+}
+
 function buildIdeaTraceCards(currentIdea, linkedOutput, linkedProject) {
   const cards = [];
 
@@ -184,6 +222,7 @@ export function renderIdeaDetailPanel() {
     elements.ideaDetailContextMeta.textContent = "";
     elements.ideaDetailDescription.textContent = "Sin contenido ampliado.";
     elements.ideaDetailMetaList.innerHTML = "";
+    syncIdeaSupportDocSection();
     elements.ideaDetailTraceList.innerHTML = "";
     elements.ideaDetailActions.innerHTML = "";
     elements.ideaDetailFeedback.textContent = "";
@@ -202,6 +241,7 @@ export function renderIdeaDetailPanel() {
     (currentIdea.source ? ` - Fuente: ${currentIdea.source}` : " - Sin fuente declarada");
   elements.ideaDetailDescription.textContent = currentIdea.note || "Sin descripción ampliada. Esta idea solo tiene título y metadatos básicos por ahora.";
   elements.ideaDetailMetaList.innerHTML = buildIdeaDetailMetaHtml(currentIdea);
+  syncIdeaSupportDocSection(currentIdea);
   elements.ideaDetailTraceList.innerHTML = buildIdeaTraceCards(currentIdea, linkedOutput, linkedProject);
   elements.ideaDetailActions.innerHTML = `
     <button

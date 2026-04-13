@@ -20,6 +20,7 @@ import {
   openProjectActivationPanel,
   openOutputEditPanel,
   openProcessPanel,
+  renderIdeaDetailPanel,
 } from "./panels.js";
 import {
   appState,
@@ -61,6 +62,14 @@ function setIdeaDetailFeedback(message = "", isError = false) {
   elements.ideaDetailFeedback.textContent = message;
   elements.ideaDetailFeedback.classList.toggle("is-visible", Boolean(message));
   elements.ideaDetailFeedback.classList.toggle("is-error", isError);
+}
+
+function normalizeSupportDocUrl(value = "") {
+  return String(value || "").trim();
+}
+
+function isExternalDocumentUrl(value = "") {
+  return /^https?:\/\//i.test(normalizeSupportDocUrl(value));
 }
 
 function runIdeaAction(action, ideaId, origin = "card") {
@@ -151,6 +160,7 @@ export function handleCaptureSubmit(event) {
     title,
     note,
     source,
+    supportDocUrl: "",
     createdAt: new Date().toISOString(),
     status: "pendiente",
     processing: null,
@@ -269,6 +279,46 @@ export function handleIdeaDetailActionClick(event) {
   }
 
   runIdeaAction(action, actionButton.dataset.id, "detail");
+}
+
+export function handleIdeaSupportDocSubmit(event) {
+  event.preventDefault();
+
+  const idea = getIdeaById(uiState.viewingIdeaId);
+
+  if (!idea) {
+    closeIdeaDetailPanel();
+    return;
+  }
+
+  const nextSupportDocUrl = normalizeSupportDocUrl(elements.ideaSupportDocUrlField?.value);
+  setIdeaDetailFeedback("");
+
+  if (nextSupportDocUrl && !isExternalDocumentUrl(nextSupportDocUrl)) {
+    setIdeaDetailFeedback("Pega una URL completa que empiece con http:// o https://.", true);
+    elements.ideaSupportDocUrlField?.focus();
+    return;
+  }
+
+  idea.supportDocUrl = nextSupportDocUrl;
+  const didSave = saveState(appState);
+
+  renderIdeaDetailPanel();
+
+  if (!didSave) {
+    setIdeaDetailFeedback(
+      "No se pudo guardar el documento de apoyo. El cambio puede perderse si recargas.",
+      true
+    );
+    return;
+  }
+
+  setIdeaDetailFeedback(
+    nextSupportDocUrl ? "Documento de apoyo guardado." : "Documento de apoyo eliminado."
+  );
+  setFeedbackTimeout("ideaDetail", () => {
+    setIdeaDetailFeedback("");
+  });
 }
 
 export function handleOutputCardClick(event) {
@@ -576,6 +626,7 @@ export function bindIdeasEvents() {
   elements.captureForm.addEventListener("submit", handleCaptureSubmit);
   elements.processForm.addEventListener("submit", handleProcessSubmit);
   elements.outputEditForm.addEventListener("submit", handleOutputEditSubmit);
+  elements.ideaSupportDocForm.addEventListener("submit", handleIdeaSupportDocSubmit);
   elements.problemField.addEventListener("change", handleProblemFieldChange);
   elements.purposeField.addEventListener("change", handlePurposeFieldChange);
   elements.areaField.addEventListener("change", handleAreaFieldChange);

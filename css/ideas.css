@@ -111,10 +111,10 @@
 .idea-card {
   padding: 18px;
   display: grid;
-  gap: 14px;
-  min-height: 348px;
+  gap: 12px;
+  min-height: 312px;
   height: 100%;
-  grid-template-rows: minmax(66px, auto) minmax(96px, 1fr) auto auto;
+  grid-template-rows: minmax(58px, auto) minmax(84px, 1fr) auto auto;
   align-content: start;
 }
 
@@ -123,11 +123,11 @@
 }
 
 .idea-card-title-zone {
-  min-height: 66px;
+  min-height: 58px;
 }
 
 .idea-card-description-zone {
-  min-height: 96px;
+  min-height: 84px;
 }
 
 .idea-header {
@@ -156,7 +156,7 @@
 
 .idea-note-wrap {
   position: relative;
-  min-height: 96px;
+  min-height: 84px;
 }
 
 .idea-note-wrap::after {
@@ -292,8 +292,12 @@
 }
 
 .idea-actions {
-  padding-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 2px;
   align-content: start;
+  justify-items: unset;
 }
 
 .action-button {
@@ -302,6 +306,7 @@
   justify-content: center;
   width: fit-content;
   max-width: 100%;
+  flex: 0 1 auto;
   min-height: 36px;
   padding: 7px 14px;
   border-radius: 999px;
