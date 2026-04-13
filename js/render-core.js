@@ -70,16 +70,34 @@ function getAuthStatusLabel() {
 }
 
 function getMigrationSummary() {
-  const migrationMeta = sessionState.migrationMeta?.migration?.ideasOutputsProjects;
+  const baseMigrationMeta = sessionState.migrationMeta?.migration?.ideasOutputsProjects;
+  const operationMigrationMeta = sessionState.migrationMeta?.migration?.operationLayer;
 
-  if (!migrationMeta) {
-    return "Aun no hay una marca remota de migracion para ideas, salidas y proyectos.";
+  if (!baseMigrationMeta && !operationMigrationMeta) {
+    return "Aun no hay una marca remota de migracion para la base ni la capa operativa.";
   }
 
-  const migratedAt = migrationMeta.migratedAt ? formatDate(migrationMeta.migratedAt) : "sin fecha";
-  const counts = migrationMeta.counts || {};
+  const summaryLines = [];
 
-  return `Migracion ${migrationMeta.status || "registrada"} | ${migratedAt} | ideas ${counts.ideas || 0} | salidas ${counts.outputs || 0} | proyectos ${counts.projects || 0}`;
+  if (baseMigrationMeta) {
+    const migratedAt = baseMigrationMeta.migratedAt ? formatDate(baseMigrationMeta.migratedAt) : "sin fecha";
+    const counts = baseMigrationMeta.counts || {};
+    summaryLines.push(
+      `Base ${baseMigrationMeta.status || "registrada"} | ${migratedAt} | ideas ${counts.ideas || 0} | salidas ${counts.outputs || 0} | proyectos ${counts.projects || 0}`
+    );
+  }
+
+  if (operationMigrationMeta) {
+    const migratedAt = operationMigrationMeta.migratedAt
+      ? formatDate(operationMigrationMeta.migratedAt)
+      : "sin fecha";
+    const counts = operationMigrationMeta.counts || {};
+    summaryLines.push(
+      `Operacion ${operationMigrationMeta.status || "registrada"} | ${migratedAt} | prioridades ${counts.priorities || 0} | bloques ${counts.focusBlocks || 0} | revisiones ${counts.reviews || 0}`
+    );
+  }
+
+  return summaryLines.join(" || ");
 }
 
 export function renderAuthPanel() {
@@ -138,7 +156,7 @@ export function renderAuthPanel() {
       || sessionState.migrationBusy;
     elements.authMigrationButton.textContent = sessionState.migrationBusy
       ? "Migrando..."
-      : "Migrar ideas, salidas y proyectos";
+      : "Migrar base y operacion";
   }
 }
 

@@ -197,7 +197,7 @@ export async function handleMigrationClick() {
 
   try {
     sessionState.migrationBusy = true;
-    setAuthFeedback("Migrando ideas, salidas y proyectos a Firestore...", "info");
+    setAuthFeedback("Migrando la base y la capa operativa a Firestore...", "info");
     renderApp();
 
     const migrationResult = await migrateLocalCollectionsToRemote({
@@ -208,7 +208,7 @@ export async function handleMigrationClick() {
 
     sessionState.migrationMeta = migrationResult.meta;
     await rehydrateAppForSession();
-    setAuthFeedback("Migracion completada. Firestore ya tiene tus ideas, salidas y proyectos.", "success");
+    setAuthFeedback("Migracion completada. Firestore ya tiene la base y la capa operativa.", "success");
   } catch (error) {
     setAuthFeedback(error.message || "La migracion no se pudo completar.", "error");
   } finally {

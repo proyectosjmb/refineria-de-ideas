@@ -13,12 +13,12 @@ export const PERSISTENCE_MODES = {
   dual: {
     id: "dual",
     label: "Dual",
-    helpText: "Mantiene respaldo local y sincroniza ideas, salidas y proyectos en Firestore.",
+    helpText: "Mantiene respaldo local y sincroniza la base y la capa operativa en Firestore.",
   },
   remote: {
     id: "remote",
     label: "Remoto",
-    helpText: "Toma ideas, salidas y proyectos desde Firestore al cargar.",
+    helpText: "Toma la base y la capa operativa desde Firestore al cargar.",
   },
 };
 export const MAX_ACTIVE_PROJECTS = 3;

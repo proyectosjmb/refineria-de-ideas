@@ -11,7 +11,13 @@ import {
   saveAppStateToLocalStorage,
   writeLocalStorageItem,
 } from "./local-store.js";
-import { loadDashboardMeta, loadRemoteCollections, syncRemoteCollections } from "./remote-store.js";
+import {
+  loadDashboardMeta,
+  loadRemoteCollections,
+  loadRemoteOperationalState,
+  syncRemoteCollections,
+  syncRemoteOperationalState,
+} from "./remote-store.js";
 import { sessionState } from "./state.js";
 
 const PERSISTENCE_MODE_STORAGE_KEY = `${STORAGE_KEY}-persistence-mode-v1`;
@@ -36,13 +42,55 @@ function getManagedCollections(state = {}) {
   };
 }
 
-function hasRemoteData(remoteState = {}) {
+function getManagedOperationalState(state = {}) {
+  return {
+    focus: {
+      mission: String(state.focus?.mission || "").trim(),
+      weekFocus: String(state.focus?.weekFocus || "").trim(),
+    },
+    todayAction: String(state.todayAction || "").trim(),
+    currentMode: String(state.currentMode || "operacion").trim() || "operacion",
+    boss: {
+      title: String(state.boss?.title || "").trim(),
+      note: String(state.boss?.note || "").trim(),
+    },
+    priorities: Array.isArray(state.priorities)
+      ? state.priorities.map((priority) => ({ ...priority }))
+      : [],
+    focusBlocks: Array.isArray(state.focusBlocks)
+      ? state.focusBlocks.map((focusBlock) => ({ ...focusBlock }))
+      : [],
+    reviews: state.reviews
+      ? {
+        daily: { ...(state.reviews.daily || {}) },
+        weekly: { ...(state.reviews.weekly || {}) },
+        monthly: { ...(state.reviews.monthly || {}) },
+      }
+      : null,
+    moneyGoal: state.moneyGoal ? { ...state.moneyGoal } : null,
+  };
+}
+
+function hasRemoteCollectionData(remoteState = {}) {
   return ["ideas", "outputs", "projects"].some(
     (collectionName) => Array.isArray(remoteState[collectionName]) && remoteState[collectionName].length > 0
   );
 }
 
-function hasCompletedMigration(meta = {}) {
+function hasRemoteOperationalData(remoteState = {}) {
+  const remoteMeta = remoteState.meta || {};
+
+  return Boolean(
+    remoteMeta.focusExists
+    || remoteMeta.operationExists
+    || remoteMeta.reviewsExists
+    || remoteMeta.moneyExists
+    || remoteMeta.prioritiesCount
+    || remoteMeta.focusBlocksCount
+  );
+}
+
+function hasCompletedBaseMigration(meta = {}) {
   return meta?.migration?.ideasOutputsProjects?.status === "completed";
 }
 
@@ -52,6 +100,54 @@ function mergeRemoteManagedCollections(baseState, remoteState) {
     ideas: remoteState.ideas || [],
     outputs: remoteState.outputs || [],
     projects: remoteState.projects || [],
+  };
+}
+
+function hasRemoteOperationAuthority(meta = {}) {
+  return Boolean(meta?.migration?.operationLayer?.status === "completed" || meta?.operationSnapshot);
+}
+
+function mergeRemoteOperationalState(baseState, remoteState, options = {}) {
+  const hasRemoteAuthority = Boolean(options.hasRemoteAuthority);
+  const emptyFocus = { mission: "", weekFocus: "" };
+  const emptyReviews = {
+    daily: { answerOne: "", answerTwo: "", answerThree: "", updatedAt: "" },
+    weekly: { answerOne: "", answerTwo: "", answerThree: "", updatedAt: "" },
+    monthly: { answerOne: "", answerTwo: "", answerThree: "", updatedAt: "" },
+  };
+  const emptyMoneyGoal = {
+    name: "",
+    targetAmount: 0,
+    note: "",
+    updatedAt: "",
+  };
+
+  return {
+    ...baseState,
+    focus: remoteState.meta?.focusExists || hasRemoteAuthority
+      ? (remoteState.focus || emptyFocus)
+      : baseState.focus,
+    todayAction: remoteState.meta?.operationExists || hasRemoteAuthority
+      ? remoteState.todayAction
+      : baseState.todayAction,
+    currentMode: remoteState.meta?.operationExists || hasRemoteAuthority
+      ? remoteState.currentMode
+      : baseState.currentMode,
+    boss: remoteState.meta?.operationExists || hasRemoteAuthority
+      ? remoteState.boss
+      : baseState.boss,
+    priorities: remoteState.meta?.prioritiesCount || hasRemoteAuthority
+      ? remoteState.priorities
+      : baseState.priorities,
+    focusBlocks: remoteState.meta?.focusBlocksCount || hasRemoteAuthority
+      ? remoteState.focusBlocks
+      : baseState.focusBlocks,
+    reviews: remoteState.meta?.reviewsExists || hasRemoteAuthority
+      ? (remoteState.reviews || emptyReviews)
+      : baseState.reviews,
+    moneyGoal: remoteState.meta?.moneyExists || hasRemoteAuthority
+      ? (remoteState.moneyGoal || emptyMoneyGoal)
+      : baseState.moneyGoal,
   };
 }
 
@@ -95,15 +191,21 @@ export async function loadPersistedState({ user = sessionState.authUser, mode = 
       type: "load",
       status: "syncing",
       mode,
-      message: "Leyendo datos remotos para ideas, salidas y proyectos...",
+      message: "Leyendo datos remotos para la base y la capa operativa...",
     });
 
-    const [remoteState, dashboardMeta] = await Promise.all([
+    const [remoteCollections, remoteOperationalState, dashboardMeta] = await Promise.all([
       loadRemoteCollections(user.uid),
+      loadRemoteOperationalState(user.uid),
       loadDashboardMeta(user.uid),
     ]);
 
-    if (!hasRemoteData(remoteState) && !hasCompletedMigration(dashboardMeta)) {
+    const hasRemoteBaseState =
+      hasRemoteCollectionData(remoteCollections) || hasCompletedBaseMigration(dashboardMeta);
+    const hasRemoteOperationState =
+      hasRemoteOperationalData(remoteOperationalState) || hasRemoteOperationAuthority(dashboardMeta);
+
+    if (!hasRemoteBaseState && !hasRemoteOperationState) {
       notifyStore({
         type: "load",
         status: "idle",
@@ -114,14 +216,26 @@ export async function loadPersistedState({ user = sessionState.authUser, mode = 
       return localState;
     }
 
+    let nextState = localState;
+
+    if (hasRemoteBaseState) {
+      nextState = mergeRemoteManagedCollections(nextState, remoteCollections);
+    }
+
+    if (hasRemoteOperationState) {
+      nextState = mergeRemoteOperationalState(nextState, remoteOperationalState, {
+        hasRemoteAuthority: hasRemoteOperationAuthority(dashboardMeta),
+      });
+    }
+
     notifyStore({
       type: "load",
       status: "success",
       mode,
-      message: "Datos remotos cargados.",
+      message: "Base y capa operativa cargadas desde Firestore.",
       meta: dashboardMeta,
     });
-    return mergeRemoteManagedCollections(localState, remoteState);
+    return nextState;
   } catch (error) {
     console.warn("No se pudo cargar el estado remoto. Se mantiene el snapshot local.", error);
     notifyStore({
@@ -147,6 +261,7 @@ export function savePersistedState(
   }
 
   const managedCollections = getManagedCollections(serializableState);
+  const managedOperationalState = getManagedOperationalState(serializableState);
 
   remoteSyncQueue = remoteSyncQueue
     .catch(() => {})
@@ -155,9 +270,12 @@ export function savePersistedState(
         type: "save",
         status: "syncing",
         mode,
-        message: "Sincronizando ideas, salidas y proyectos en Firestore...",
+        message: "Sincronizando base y capa operativa en Firestore...",
       });
-      await syncRemoteCollections(user.uid, managedCollections);
+      await Promise.all([
+        syncRemoteCollections(user.uid, managedCollections),
+        syncRemoteOperationalState(user.uid, managedOperationalState),
+      ]);
       notifyStore({
         type: "save",
         status: "success",

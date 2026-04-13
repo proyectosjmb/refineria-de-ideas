@@ -1,8 +1,13 @@
 /*
-  Migracion de ideas, outputs y projects desde el snapshot local hacia Firestore.
+  Migracion de la base y la capa operativa desde el snapshot local hacia Firestore.
 */
 
-import { loadDashboardMeta, saveDashboardMeta, syncRemoteCollections } from "./remote-store.js";
+import {
+  loadDashboardMeta,
+  saveDashboardMeta,
+  syncRemoteCollections,
+  syncRemoteOperationalState,
+} from "./remote-store.js";
 
 function cloneManagedCollections(state = {}) {
   return {
@@ -20,6 +25,69 @@ function countManagedCollections(managedCollections = {}) {
   };
 }
 
+function cloneOperationalLayer(state = {}) {
+  return {
+    focus: {
+      mission: String(state.focus?.mission || "").trim(),
+      weekFocus: String(state.focus?.weekFocus || "").trim(),
+    },
+    todayAction: String(state.todayAction || "").trim(),
+    currentMode: String(state.currentMode || "operacion").trim() || "operacion",
+    boss: {
+      title: String(state.boss?.title || "").trim(),
+      note: String(state.boss?.note || "").trim(),
+    },
+    priorities: Array.isArray(state.priorities)
+      ? state.priorities.map((priority) => ({ ...priority }))
+      : [],
+    focusBlocks: Array.isArray(state.focusBlocks)
+      ? state.focusBlocks.map((focusBlock) => ({ ...focusBlock }))
+      : [],
+    reviews: {
+      daily: { ...(state.reviews?.daily || {}) },
+      weekly: { ...(state.reviews?.weekly || {}) },
+      monthly: { ...(state.reviews?.monthly || {}) },
+    },
+    moneyGoal: { ...(state.moneyGoal || {}) },
+  };
+}
+
+function countSavedReviews(reviews = {}) {
+  return ["daily", "weekly", "monthly"].reduce((total, reviewType) => {
+    const reviewEntry = reviews[reviewType] || {};
+    const hasContent = Boolean(
+      String(reviewEntry.answerOne || "").trim()
+      || String(reviewEntry.answerTwo || "").trim()
+      || String(reviewEntry.answerThree || "").trim()
+      || String(reviewEntry.updatedAt || "").trim()
+    );
+
+    return hasContent ? total + 1 : total;
+  }, 0);
+}
+
+function countOperationalLayer(operationalLayer = {}) {
+  return {
+    priorities: operationalLayer.priorities?.length || 0,
+    focusBlocks: operationalLayer.focusBlocks?.length || 0,
+    reviews: countSavedReviews(operationalLayer.reviews),
+    hasFocus: Boolean(
+      String(operationalLayer.focus?.mission || "").trim()
+      || String(operationalLayer.focus?.weekFocus || "").trim()
+    ),
+    hasTodayAction: Boolean(String(operationalLayer.todayAction || "").trim()),
+    hasBoss: Boolean(
+      String(operationalLayer.boss?.title || "").trim()
+      || String(operationalLayer.boss?.note || "").trim()
+    ),
+    hasMoneyGoal: Boolean(
+      String(operationalLayer.moneyGoal?.name || "").trim()
+      || Number(operationalLayer.moneyGoal?.targetAmount || 0) > 0
+      || String(operationalLayer.moneyGoal?.note || "").trim()
+    ),
+  };
+}
+
 export async function migrateLocalCollectionsToRemote({
   userId,
   localState,
@@ -30,10 +98,15 @@ export async function migrateLocalCollectionsToRemote({
   }
 
   const managedCollections = cloneManagedCollections(localState);
+  const operationalLayer = cloneOperationalLayer(localState);
   const counts = countManagedCollections(managedCollections);
+  const operationCounts = countOperationalLayer(operationalLayer);
   const migratedAt = new Date().toISOString();
 
-  await syncRemoteCollections(userId, managedCollections);
+  await Promise.all([
+    syncRemoteCollections(userId, managedCollections),
+    syncRemoteOperationalState(userId, operationalLayer),
+  ]);
   await saveDashboardMeta(userId, {
     migration: {
       ideasOutputsProjects: {
@@ -43,12 +116,21 @@ export async function migrateLocalCollectionsToRemote({
         migratedAt,
         counts,
       },
+      operationLayer: {
+        status: "completed",
+        source: "localStorage",
+        persistenceMode,
+        migratedAt,
+        counts: operationCounts,
+      },
     },
   });
 
   return {
     managedCollections,
+    operationalLayer,
     counts,
+    operationCounts,
     migratedAt,
     meta: await loadDashboardMeta(userId),
   };
