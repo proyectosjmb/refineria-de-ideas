@@ -3,9 +3,7 @@
 */
 
 import {
-  COPILOT_OPTIONS,
   DEFAULT_COPILOT_PHRASE,
-  DEFAULT_COPILOT_TYPE,
   OPERATION_MODES,
   REVIEW_CONFIG,
 } from "./config.js";
@@ -18,20 +16,22 @@ import {
   renderTodayAction,
 } from "./render-core.js";
 import {
+  closeDashboardCollectionDetailPanel,
   closeIdeaDetailPanel,
   closeOutputEditPanel,
   closeProcessPanel,
   closeProjectEditPanel,
+  openDashboardCollectionDetailPanel,
 } from "./panels.js";
-import { appState, uiState } from "./state.js";
+import { appState, sessionState, uiState } from "./state.js";
 import {
   loadActiveAppView,
   loadSectionLayout,
   saveActiveAppView,
-  saveCopilotPreferences,
   saveSectionLayout,
   saveState,
 } from "./storage.js";
+import { uploadCompanionCharacterImage } from "./remote-store.js";
 import {
   setFeedbackTimeout,
   setFocusSaveButtonState,
@@ -39,7 +39,7 @@ import {
   setReviewSaveButtonState,
   setTodayActionSaveButtonState,
 } from "./ui-helpers.js";
-import { getModeLabel } from "./utils.js";
+import { createId, getModeLabel } from "./utils.js";
 
 let navigationHighlightTimeout = null;
 let pendingNavigationObserver = null;
@@ -452,28 +452,53 @@ function resetDashboardActionTransientState() {
   uiState.dashboardLastCompletedText = "";
 }
 
-function toggleCopilotEditor(nextOpenState = !uiState.isCopilotEditorOpen) {
-  uiState.isCopilotEditorOpen = Boolean(nextOpenState);
-  renderDashboard();
-
-  if (uiState.isCopilotEditorOpen && elements.dashboardGuidePhraseInput) {
-    requestAnimationFrame(() => {
-      elements.dashboardGuidePhraseInput.focus();
-      elements.dashboardGuidePhraseInput.select();
-    });
+function setCompanionPanelFeedback(message = "", isError = false) {
+  if (!elements.companionPanelFeedback) {
+    return;
   }
+
+  elements.companionPanelFeedback.textContent = message;
+  elements.companionPanelFeedback.classList.toggle("is-visible", Boolean(message));
+  elements.companionPanelFeedback.classList.toggle("is-error", isError);
 }
 
-function getNextCopilotType(rawType = "") {
-  if (COPILOT_OPTIONS.some((copilot) => copilot.id === rawType)) {
-    return rawType;
-  }
+function getCompanionCharacters() {
+  return Array.isArray(appState.copilot?.characters) ? appState.copilot.characters : [];
+}
 
-  if (COPILOT_OPTIONS.some((copilot) => copilot.id === DEFAULT_COPILOT_TYPE)) {
-    return DEFAULT_COPILOT_TYPE;
-  }
+function getCompanionPhrases() {
+  return Array.isArray(appState.copilot?.phrases) ? appState.copilot.phrases : [];
+}
 
-  return COPILOT_OPTIONS[0]?.id || "cohete";
+function applyCopilotState(nextCopilot = {}) {
+  const activeCharacterId = nextCopilot.activeCharacterId || nextCopilot.type || appState.copilot?.activeCharacterId;
+  const activePhraseText = String(
+    nextCopilot.activePhraseText || nextCopilot.phrase || appState.copilot?.activePhraseText || ""
+  ).trim() || DEFAULT_COPILOT_PHRASE;
+
+  appState.copilot = {
+    ...appState.copilot,
+    ...nextCopilot,
+    type: activeCharacterId,
+    phrase: activePhraseText,
+    activeCharacterId,
+    activePhraseText,
+  };
+}
+
+function toggleCopilotEditor(nextOpenState = !uiState.isCopilotEditorOpen) {
+  uiState.isCopilotEditorOpen = Boolean(nextOpenState);
+  if (!uiState.isCopilotEditorOpen) {
+    setCompanionPanelFeedback("");
+  }
+  renderDashboard();
+
+  if (uiState.isCopilotEditorOpen && elements.companionPhraseInput) {
+    requestAnimationFrame(() => {
+      elements.companionPhraseInput.focus();
+      elements.companionPhraseInput.select();
+    });
+  }
 }
 
 export function handleCopilotToggleClick(event) {
@@ -484,23 +509,191 @@ export function handleCopilotToggleClick(event) {
   }
 
   event.preventDefault();
-  toggleCopilotEditor();
+  toggleCopilotEditor(true);
 }
 
-export function handleCopilotSubmit(event) {
+export async function handleCompanionCharacterSubmit(event) {
   event.preventDefault();
 
-  const formData = new FormData(elements.dashboardGuideEditor);
-  const nextPhrase = String(formData.get("copilotPhrase") || "").trim() || DEFAULT_COPILOT_PHRASE;
-  const nextType = getNextCopilotType(String(formData.get("copilotType") || "").trim());
+  const characterName = String(elements.companionCharacterNameField?.value || "").trim();
+  const imageFile = elements.companionCharacterImageField?.files?.[0];
 
-  appState.copilot = {
-    type: nextType,
-    phrase: nextPhrase,
-  };
+  setCompanionPanelFeedback("");
 
-  saveCopilotPreferences(appState.copilot);
-  toggleCopilotEditor(false);
+  if (!characterName) {
+    setCompanionPanelFeedback("Escribe un nombre para el personaje.", true);
+    elements.companionCharacterNameField?.focus();
+    return;
+  }
+
+  if (!imageFile) {
+    setCompanionPanelFeedback("Selecciona una imagen para guardar el personaje.", true);
+    elements.companionCharacterImageField?.focus();
+    return;
+  }
+
+  if (!["image/png", "image/webp"].includes(String(imageFile.type || "").toLowerCase())) {
+    setCompanionPanelFeedback("Usa una imagen PNG o WEBP para el personaje.", true);
+    elements.companionCharacterImageField?.focus();
+    return;
+  }
+
+  if (!sessionState.authUser) {
+    setCompanionPanelFeedback("Inicia sesión para subir imágenes y sincronizar personajes entre dispositivos.", true);
+    return;
+  }
+
+  const characterId = createId("companion-character");
+  const defaultButtonLabel = elements.companionCharacterSaveButton?.dataset.defaultLabel || "Guardar personaje";
+
+  if (elements.companionCharacterSaveButton) {
+    elements.companionCharacterSaveButton.disabled = true;
+    elements.companionCharacterSaveButton.textContent = "Subiendo...";
+  }
+
+  try {
+    const imageUrl = await uploadCompanionCharacterImage(sessionState.authUser.uid, characterId, imageFile);
+    const nextCharacters = [
+      ...getCompanionCharacters(),
+      {
+        id: characterId,
+        name: characterName,
+        imageUrl,
+      },
+    ];
+
+    applyCopilotState({
+      characters: nextCharacters,
+      activeCharacterId: characterId,
+    });
+
+    saveState(appState);
+    elements.companionCharacterForm?.reset();
+    renderDashboard();
+    setCompanionPanelFeedback("Personaje guardado y activado.");
+    setFeedbackTimeout("companionPanel", () => {
+      setCompanionPanelFeedback("");
+    }, 2200);
+  } catch (error) {
+    console.warn("No se pudo guardar el personaje.", error);
+    setCompanionPanelFeedback(
+      "No se pudo subir la imagen del personaje. Revisa tu conexión o la configuración de Firebase Storage.",
+      true
+    );
+  } finally {
+    if (elements.companionCharacterSaveButton) {
+      elements.companionCharacterSaveButton.disabled = false;
+      elements.companionCharacterSaveButton.textContent = defaultButtonLabel;
+    }
+  }
+}
+
+export function handleCompanionPhraseSubmit(event) {
+  event.preventDefault();
+
+  const nextPhrase = String(elements.companionPhraseInput?.value || "").trim();
+
+  setCompanionPanelFeedback("");
+
+  if (!nextPhrase) {
+    setCompanionPanelFeedback("Escribe una frase antes de guardarla.", true);
+    elements.companionPhraseInput?.focus();
+    return;
+  }
+
+  const matchingPhrase = getCompanionPhrases().find((phrase) => phrase.text === nextPhrase);
+
+  applyCopilotState({
+    activePhraseId: matchingPhrase?.id || "",
+    activePhraseText: nextPhrase,
+  });
+
+  saveState(appState);
+  renderDashboard();
+  setCompanionPanelFeedback("Frase activa actualizada.");
+  setFeedbackTimeout("companionPanel", () => {
+    setCompanionPanelFeedback("");
+  }, 2200);
+}
+
+export function handleCompanionPhraseSaveClick() {
+  const nextPhrase = String(elements.companionPhraseInput?.value || "").trim();
+
+  setCompanionPanelFeedback("");
+
+  if (!nextPhrase) {
+    setCompanionPanelFeedback("Escribe una frase antes de guardarla en la biblioteca.", true);
+    elements.companionPhraseInput?.focus();
+    return;
+  }
+
+  const existingPhrase = getCompanionPhrases().find((phrase) => phrase.text === nextPhrase);
+  const nextPhraseId = existingPhrase?.id || createId("companion-phrase");
+  const nextPhrases = existingPhrase
+    ? getCompanionPhrases()
+    : [...getCompanionPhrases(), { id: nextPhraseId, text: nextPhrase }];
+
+  applyCopilotState({
+    phrases: nextPhrases,
+    activePhraseId: nextPhraseId,
+    activePhraseText: nextPhrase,
+  });
+
+  saveState(appState);
+  renderDashboard();
+  setCompanionPanelFeedback(existingPhrase ? "La frase ya estaba guardada y quedó activa." : "Frase guardada en la biblioteca.");
+  setFeedbackTimeout("companionPanel", () => {
+    setCompanionPanelFeedback("");
+  }, 2200);
+}
+
+export function handleCompanionLibraryClick(event) {
+  const actionButton = event.target.closest("[data-companion-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const action = actionButton.dataset.companionAction;
+
+  if (action === "activate-character") {
+    const characterId = actionButton.dataset.characterId;
+
+    if (!getCompanionCharacters().some((character) => character.id === characterId)) {
+      return;
+    }
+
+    applyCopilotState({
+      activeCharacterId: characterId,
+    });
+    saveState(appState);
+    renderDashboard();
+    setCompanionPanelFeedback("Personaje activo actualizado.");
+    setFeedbackTimeout("companionPanel", () => {
+      setCompanionPanelFeedback("");
+    }, 2200);
+    return;
+  }
+
+  if (action === "activate-phrase") {
+    const phraseId = actionButton.dataset.phraseId;
+    const selectedPhrase = getCompanionPhrases().find((phrase) => phrase.id === phraseId);
+
+    if (!selectedPhrase) {
+      return;
+    }
+
+    applyCopilotState({
+      activePhraseId: selectedPhrase.id,
+      activePhraseText: selectedPhrase.text,
+    });
+    saveState(appState);
+    renderDashboard();
+    setCompanionPanelFeedback("Frase activa actualizada.");
+    setFeedbackTimeout("companionPanel", () => {
+      setCompanionPanelFeedback("");
+    }, 2200);
+  }
 }
 
 function handleGlobalClick(event) {
@@ -508,7 +701,7 @@ function handleGlobalClick(event) {
     return;
   }
 
-  if (event.target.closest("#dashboard-guide-card")) {
+  if (event.target.closest("#companion-panel") || event.target.closest("[data-copilot-edit-toggle]")) {
     return;
   }
 
@@ -556,6 +749,24 @@ export function handleDashboardActionClick(event) {
     setDashboardActionFeedback(uiState.dashboardTodayActionPaused ? "Acción en pausa" : "Acción reanudada");
     clearDashboardActionFeedbackSoon();
   }
+}
+
+export function handleDashboardCollectionDetailClick(event) {
+  const detailButton = event.target.closest("[data-dashboard-detail-trigger]");
+
+  if (!detailButton) {
+    return;
+  }
+
+  event.stopPropagation();
+
+  const detailType = detailButton.dataset.dashboardDetailTrigger;
+
+  if (!detailType) {
+    return;
+  }
+
+  openDashboardCollectionDetailPanel(detailType);
 }
 
 export function handleAppViewSwitchClick(event) {
@@ -676,6 +887,11 @@ export function handleGlobalKeydown(event) {
     return;
   }
 
+  if (uiState.dashboardCollectionDetailType) {
+    closeDashboardCollectionDetailPanel();
+    return;
+  }
+
   if (uiState.editingProjectId) {
     closeProjectEditPanel();
     return;
@@ -686,13 +902,22 @@ export function handleGlobalKeydown(event) {
     return;
   }
 
+  if (uiState.viewingIdeaId) {
+    closeIdeaDetailPanel();
+    return;
+  }
+
   if (uiState.processingIdeaId) {
     closeProcessPanel();
   }
 }
 
 export function handleDashboardNavigationClick(event) {
-  if (event.target.closest("[data-dashboard-action]") || event.target.closest("#dashboard-action-details")) {
+  if (
+    event.target.closest("[data-dashboard-action]")
+    || event.target.closest("[data-dashboard-detail-trigger]")
+    || event.target.closest("#dashboard-action-details")
+  ) {
     return;
   }
 
@@ -706,7 +931,11 @@ export function handleDashboardNavigationClick(event) {
 }
 
 export function handleDashboardNavigationKeydown(event) {
-  if (event.target.closest("[data-dashboard-action]") || event.target.closest("#dashboard-action-details")) {
+  if (
+    event.target.closest("[data-dashboard-action]")
+    || event.target.closest("[data-dashboard-detail-trigger]")
+    || event.target.closest("#dashboard-action-details")
+  ) {
     return;
   }
 
@@ -769,22 +998,51 @@ export function bindCoreEvents() {
   elements.processBackdrop.addEventListener("click", closeProcessPanel);
   elements.closeIdeaDetailPanelButton.addEventListener("click", closeIdeaDetailPanel);
   elements.ideaDetailBackdrop.addEventListener("click", closeIdeaDetailPanel);
+  if (elements.closeDashboardCollectionDetailPanelButton) {
+    elements.closeDashboardCollectionDetailPanelButton.addEventListener("click", closeDashboardCollectionDetailPanel);
+  }
+  if (elements.dashboardCollectionDetailBackdrop) {
+    elements.dashboardCollectionDetailBackdrop.addEventListener("click", closeDashboardCollectionDetailPanel);
+  }
   elements.closeOutputEditPanelButton.addEventListener("click", closeOutputEditPanel);
   elements.cancelOutputEditButton.addEventListener("click", closeOutputEditPanel);
   elements.outputEditBackdrop.addEventListener("click", closeOutputEditPanel);
   elements.closeProjectEditPanelButton.addEventListener("click", closeProjectEditPanel);
   elements.cancelProjectEditButton.addEventListener("click", closeProjectEditPanel);
   elements.projectEditBackdrop.addEventListener("click", closeProjectEditPanel);
+  if (elements.closeCompanionPanelButton) {
+    elements.closeCompanionPanelButton.addEventListener("click", () => {
+      toggleCopilotEditor(false);
+    });
+  }
+  if (elements.companionBackdrop) {
+    elements.companionBackdrop.addEventListener("click", () => {
+      toggleCopilotEditor(false);
+    });
+  }
   if (elements.workspace) {
     elements.workspace.addEventListener("click", handleCopilotToggleClick);
     elements.workspace.addEventListener("click", handleAccordionActionClick);
     elements.workspace.addEventListener("keydown", handleAccordionActionKeydown);
     elements.workspace.addEventListener("click", handleDashboardActionClick);
+    elements.workspace.addEventListener("click", handleDashboardCollectionDetailClick);
     elements.workspace.addEventListener("click", handleDashboardNavigationClick);
     elements.workspace.addEventListener("keydown", handleDashboardNavigationKeydown);
   }
-  if (elements.dashboardGuideEditor) {
-    elements.dashboardGuideEditor.addEventListener("submit", handleCopilotSubmit);
+  if (elements.companionCharacterForm) {
+    elements.companionCharacterForm.addEventListener("submit", handleCompanionCharacterSubmit);
+  }
+  if (elements.companionPhraseForm) {
+    elements.companionPhraseForm.addEventListener("submit", handleCompanionPhraseSubmit);
+  }
+  if (elements.companionPhraseSaveButton) {
+    elements.companionPhraseSaveButton.addEventListener("click", handleCompanionPhraseSaveClick);
+  }
+  if (elements.companionCharactersList) {
+    elements.companionCharactersList.addEventListener("click", handleCompanionLibraryClick);
+  }
+  if (elements.companionPhrasesList) {
+    elements.companionPhrasesList.addEventListener("click", handleCompanionLibraryClick);
   }
   if (elements.viewSwitcher) {
     elements.viewSwitcher.addEventListener("click", handleAppViewSwitchClick);

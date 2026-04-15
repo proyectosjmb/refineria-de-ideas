@@ -20,6 +20,8 @@ import {
   getActiveProjectsCount,
   getFinanceSummary,
   getMoneyGoalProgress,
+  getPrioritiesSorted,
+  getProjectsSorted,
   sessionState,
   uiState,
 } from "./state.js";
@@ -48,13 +50,36 @@ import {
   renderIdeaDetailPanel,
   renderOutputEditPanel,
   renderProcessPanel,
+  renderDashboardCollectionDetailPanel,
   renderProjectEditPanel,
 } from "./panels.js";
+import { setCompanionPanelVisibility } from "./ui-helpers.js";
 
 function setTextIfPresent(target, value) {
   if (target) {
     target.textContent = value;
   }
+}
+
+function setHtmlIfPresent(target, value) {
+  if (target) {
+    target.innerHTML = value;
+  }
+}
+
+function buildDashboardCollectionPreview(items, getLabel, emptyText) {
+  const labels = items
+    .map((item) => getLabel(item))
+    .filter(Boolean);
+
+  if (labels.length === 0) {
+    return `<span class="dashboard-execution-preview-item">${escapeHtml(emptyText)}</span>`;
+  }
+
+  return labels
+    .slice(0, 3)
+    .map((label) => `<span class="dashboard-execution-preview-item">${escapeHtml(label)}</span>`)
+    .join("");
 }
 
 function getAuthStatusLabel() {
@@ -191,11 +216,92 @@ function getDashboardGuideTheme() {
 }
 
 function getSelectedCopilot() {
-  return COPILOT_OPTIONS.find((copilot) => copilot.id === appState.copilot?.type) || COPILOT_OPTIONS[0];
+  const fallbackCharacters = COPILOT_OPTIONS.map((copilot) => ({
+    id: copilot.id,
+    name: copilot.name,
+    imageUrl: copilot.src,
+  }));
+  const availableCharacters = Array.isArray(appState.copilot?.characters) && appState.copilot.characters.length
+    ? appState.copilot.characters
+    : fallbackCharacters;
+  const activeCharacterId = appState.copilot?.activeCharacterId || appState.copilot?.type;
+
+  return availableCharacters.find((copilot) => copilot.id === activeCharacterId) || availableCharacters[0];
 }
 
 function getCopilotPhrase() {
-  return String(appState.copilot?.phrase || "").trim() || DEFAULT_COPILOT_PHRASE;
+  return String(appState.copilot?.activePhraseText || appState.copilot?.phrase || "").trim() || DEFAULT_COPILOT_PHRASE;
+}
+
+function buildCompanionCharacterCards(selectedCopilot) {
+  const companionCharacters = Array.isArray(appState.copilot?.characters) ? appState.copilot.characters : [];
+
+  if (!companionCharacters.length) {
+    return `
+      <article class="companion-library-card companion-library-card-empty">
+        <p class="microcopy">Aun no hay personajes guardados.</p>
+      </article>
+    `;
+  }
+
+  return companionCharacters.map((character) => {
+    const isActive = character.id === selectedCopilot.id;
+
+    return `
+      <article class="companion-library-card${isActive ? " is-active" : ""}">
+        <div class="companion-library-media">
+          <img src="${escapeHtml(character.imageUrl)}" alt="${escapeHtml(`Personaje ${character.name}`)}">
+        </div>
+        <div class="companion-library-copy">
+          <strong>${escapeHtml(character.name)}</strong>
+          <span>${isActive ? "Activo" : "Disponible"}</span>
+        </div>
+        <button
+          type="button"
+          class="button button-secondary"
+          data-companion-action="activate-character"
+          data-character-id="${escapeHtml(character.id)}"
+          ${isActive ? "disabled" : ""}
+        >
+          ${isActive ? "Activo" : "Activar"}
+        </button>
+      </article>
+    `;
+  }).join("");
+}
+
+function buildCompanionPhraseCards(activePhraseText) {
+  const companionPhrases = Array.isArray(appState.copilot?.phrases) ? appState.copilot.phrases : [];
+
+  if (!companionPhrases.length) {
+    return `
+      <article class="companion-library-card companion-library-card-empty">
+        <p class="microcopy">Aun no hay frases guardadas.</p>
+      </article>
+    `;
+  }
+
+  return companionPhrases.map((phrase) => {
+    const isActive = phrase.text === activePhraseText;
+
+    return `
+      <article class="companion-library-card companion-library-card-text${isActive ? " is-active" : ""}">
+        <div class="companion-library-copy">
+          <strong>${escapeHtml(phrase.text)}</strong>
+          <span>${isActive ? "Activa" : "Guardada"}</span>
+        </div>
+        <button
+          type="button"
+          class="button button-secondary"
+          data-companion-action="activate-phrase"
+          data-phrase-id="${escapeHtml(phrase.id)}"
+          ${isActive ? "disabled" : ""}
+        >
+          ${isActive ? "Activa" : "Usar"}
+        </button>
+      </article>
+    `;
+  }).join("");
 }
 
 function animateGuideRefreshIfNeeded(guideTheme, copilot) {
@@ -260,6 +366,22 @@ export function renderDashboard() {
       : "La pieza más importante para mover hoy.";
   const detailContextText = appState.focus.weekFocus || missionText;
   const detailLoadText = `${getActiveProjectsCount()} proyectos / ${getActivePrioritiesCount()} prioridades`;
+  const activeProjects = getProjectsSorted()
+    .filter((project) => project.status === "activo")
+    .slice(0, MAX_ACTIVE_PROJECTS);
+  const activePriorities = getPrioritiesSorted()
+    .filter((priority) => priority.status !== "completada")
+    .slice(0, MAX_ACTIVE_PRIORITIES);
+  const activeProjectsPreview = buildDashboardCollectionPreview(
+    activeProjects,
+    (project) => project.name,
+    "Sin proyectos activos"
+  );
+  const activePrioritiesPreview = buildDashboardCollectionPreview(
+    activePriorities,
+    (priority) => priority.title,
+    "Sin prioridades activas"
+  );
 
   animateGuideRefreshIfNeeded(guideTheme, {
     type: selectedCopilot.id,
@@ -271,7 +393,9 @@ export function renderDashboard() {
   setTextIfPresent(elements.dashboardTodayAction, actionDisplayText);
   setTextIfPresent(elements.dashboardMode, currentModeText);
   setTextIfPresent(elements.dashboardActiveProjects, activeProjectsText);
+  setHtmlIfPresent(elements.dashboardProjectsPreview, activeProjectsPreview);
   setTextIfPresent(elements.dashboardActivePriorities, activePrioritiesText);
+  setHtmlIfPresent(elements.dashboardPrioritiesPreview, activePrioritiesPreview);
   setTextIfPresent(elements.dashboardFocusBlocks, activeFocusBlocksText);
   setTextIfPresent(elements.dashboardBoss, bossText);
   setTextIfPresent(elements.dashboardMoneyGoal, moneyGoalText);
@@ -304,8 +428,8 @@ export function renderDashboard() {
   }
 
   if (elements.dashboardGuideImage) {
-    elements.dashboardGuideImage.src = selectedCopilot.src;
-    elements.dashboardGuideImage.alt = selectedCopilot.alt;
+    elements.dashboardGuideImage.src = selectedCopilot.imageUrl;
+    elements.dashboardGuideImage.alt = `Personaje ${selectedCopilot.name}`;
   }
 
   if (elements.dashboardGuidePresence) {
@@ -316,21 +440,27 @@ export function renderDashboard() {
     elements.dashboardGuideEditButton.setAttribute("aria-expanded", String(uiState.isCopilotEditorOpen));
   }
 
-  if (elements.dashboardGuideEditor) {
-    elements.dashboardGuideEditor.hidden = !uiState.isCopilotEditorOpen;
+  if (elements.companionActiveName) {
+    elements.companionActiveName.textContent = selectedCopilot.name;
   }
 
-  if (elements.dashboardGuidePhraseInput && document.activeElement !== elements.dashboardGuidePhraseInput) {
-    elements.dashboardGuidePhraseInput.value = copilotPhrase;
+  if (elements.companionActivePhrase) {
+    elements.companionActivePhrase.textContent = copilotPhrase;
   }
 
-  if (elements.dashboardGuideTypeSelect) {
-    elements.dashboardGuideTypeSelect.innerHTML = COPILOT_OPTIONS.map((copilot) => `
-      <option value="${escapeHtml(copilot.id)}"${copilot.id === selectedCopilot.id ? " selected" : ""}>
-        ${escapeHtml(copilot.name)}
-      </option>
-    `).join("");
+  if (elements.companionPhraseInput && document.activeElement !== elements.companionPhraseInput) {
+    elements.companionPhraseInput.value = copilotPhrase;
   }
+
+  if (elements.companionCharactersList) {
+    elements.companionCharactersList.innerHTML = buildCompanionCharacterCards(selectedCopilot);
+  }
+
+  if (elements.companionPhrasesList) {
+    elements.companionPhrasesList.innerHTML = buildCompanionPhraseCards(copilotPhrase);
+  }
+
+  setCompanionPanelVisibility(uiState.isCopilotEditorOpen);
 
   if (elements.dashboardActionCard) {
     elements.dashboardActionCard.dataset.guideTone = guideTheme.tone;
@@ -361,6 +491,14 @@ export function renderDashboard() {
     elements.dashboardDetailsActionButton.textContent = uiState.dashboardActionDetailsOpen ? "Ocultar detalles" : "Ver detalles";
     elements.dashboardDetailsActionButton.setAttribute("aria-expanded", String(uiState.dashboardActionDetailsOpen));
     elements.dashboardDetailsActionButton.classList.toggle("is-open", uiState.dashboardActionDetailsOpen);
+  }
+
+  if (elements.dashboardProjectsDetailButton) {
+    elements.dashboardProjectsDetailButton.textContent = "Ver detalles";
+  }
+
+  if (elements.dashboardPrioritiesDetailButton) {
+    elements.dashboardPrioritiesDetailButton.textContent = "Ver detalles";
   }
 
   if (elements.dashboardActionDetails) {
@@ -543,6 +681,7 @@ export function renderApp() {
   renderCounters();
   renderProcessPanel();
   renderIdeaDetailPanel();
+  renderDashboardCollectionDetailPanel();
   renderOutputEditPanel();
   renderProjectEditPanel();
 }

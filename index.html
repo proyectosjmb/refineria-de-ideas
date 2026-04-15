@@ -195,7 +195,7 @@
               type="button"
               class="dashboard-guide-edit-button"
               data-copilot-edit-toggle
-              aria-controls="dashboard-guide-editor"
+              aria-controls="companion-panel"
               aria-expanded="false"
               aria-label="Editar copiloto"
             >
@@ -206,7 +206,7 @@
               type="button"
               class="dashboard-guide-presence"
               data-copilot-edit-toggle
-              aria-controls="dashboard-guide-editor"
+              aria-controls="companion-panel"
               aria-expanded="false"
             >
               <img id="dashboard-guide-image" class="dashboard-guide-image" src="assets/copilots/cohete.svg" alt="Copiloto Cohete">
@@ -215,29 +215,6 @@
                 <strong id="dashboard-guide-phrase" class="dashboard-guide-phrase">Hoy, solo avanza.</strong>
               </span>
             </button>
-
-            <form id="dashboard-guide-editor" class="dashboard-guide-editor" aria-label="Editar copiloto" hidden>
-              <label class="dashboard-guide-field" for="dashboard-guide-phrase-input">
-                <span class="dashboard-guide-field-label">Frase</span>
-                <input
-                  id="dashboard-guide-phrase-input"
-                  name="copilotPhrase"
-                  type="text"
-                  maxlength="72"
-                  placeholder="Hoy, solo avanza."
-                  autocomplete="off"
-                >
-              </label>
-
-              <label class="dashboard-guide-field" for="dashboard-guide-type-select">
-                <span class="dashboard-guide-field-label">Copiloto</span>
-                <select id="dashboard-guide-type-select" name="copilotType"></select>
-              </label>
-
-              <div class="dashboard-guide-editor-actions">
-                <button id="dashboard-guide-save" type="submit" class="dashboard-guide-save-button">Guardar</button>
-              </div>
-            </form>
           </aside>
 
           <div class="dashboard-overview">
@@ -341,7 +318,23 @@
                     aria-label="Ir a Proyectos activos"
                   >
                     <span class="dashboard-label">Proyectos activos</span>
-                    <strong id="dashboard-active-projects" class="dashboard-value">0</strong>
+                    <div class="dashboard-execution-content">
+                      <div class="dashboard-execution-main">
+                        <strong id="dashboard-active-projects" class="dashboard-value">0</strong>
+                        <button
+                          type="button"
+                          class="dashboard-inline-button dashboard-inline-button-ghost dashboard-execution-detail-button"
+                          data-dashboard-detail-trigger="projects"
+                          aria-controls="dashboard-collection-detail-panel"
+                          aria-haspopup="dialog"
+                        >
+                          Ver detalles
+                        </button>
+                      </div>
+                      <div id="dashboard-projects-preview" class="dashboard-execution-preview" aria-label="Resumen de proyectos activos">
+                        <span class="dashboard-execution-preview-item">Sin proyectos activos</span>
+                      </div>
+                    </div>
                   </article>
 
                   <article
@@ -352,7 +345,23 @@
                     aria-label="Ir a 3 prioridades de hoy"
                   >
                     <span class="dashboard-label">Prioridades activas</span>
-                    <strong id="dashboard-active-priorities" class="dashboard-value">0</strong>
+                    <div class="dashboard-execution-content">
+                      <div class="dashboard-execution-main">
+                        <strong id="dashboard-active-priorities" class="dashboard-value">0</strong>
+                        <button
+                          type="button"
+                          class="dashboard-inline-button dashboard-inline-button-ghost dashboard-execution-detail-button"
+                          data-dashboard-detail-trigger="priorities"
+                          aria-controls="dashboard-collection-detail-panel"
+                          aria-haspopup="dialog"
+                        >
+                          Ver detalles
+                        </button>
+                      </div>
+                      <div id="dashboard-priorities-preview" class="dashboard-execution-preview" aria-label="Resumen de prioridades activas">
+                        <span class="dashboard-execution-preview-item">Sin prioridades activas</span>
+                      </div>
+                    </div>
                   </article>
                 </div>
               </div>
@@ -1243,6 +1252,36 @@
       </div>
 
       <form id="process-form" class="process-form">
+        <div class="form-block form-block-grid">
+          <div class="form-block-head">
+            <p class="context-label">Idea base</p>
+            <p class="field-help">Aprovecha este momento para corregir el titulo y la fuente antes de convertir la idea en una salida operativa.</p>
+          </div>
+
+          <label class="field">
+            <span>Titulo de la idea</span>
+            <input
+              id="process-idea-title-field"
+              name="ideaTitle"
+              type="text"
+              maxlength="120"
+              placeholder="Ej. Sistema simple para revisar prioridades"
+              required
+            >
+          </label>
+
+          <label class="field">
+            <span>Fuente</span>
+            <input
+              id="process-idea-source-field"
+              name="ideaSource"
+              type="text"
+              maxlength="80"
+              placeholder="Libro, reunion, intuicion, cliente..."
+            >
+          </label>
+        </div>
+
         <div class="form-block">
           <div class="form-block-head">
             <p class="context-label">Claridad base</p>
@@ -1511,6 +1550,30 @@
 
       <div id="idea-detail-actions" class="process-actions idea-detail-actions"></div>
       <p id="idea-detail-feedback" class="microcopy save-feedback" aria-live="polite"></p>
+    </section>
+  </aside>
+
+  <aside id="dashboard-collection-detail-panel" class="process-panel dashboard-collection-detail-panel" aria-hidden="true">
+    <div class="process-backdrop" data-close-dashboard-collection-detail-panel="true"></div>
+
+    <section class="process-card dashboard-collection-detail-card" role="dialog" aria-modal="true" aria-labelledby="dashboard-collection-detail-title">
+      <div class="process-header">
+        <div>
+          <p class="section-kicker">Detalle operativo</p>
+          <h2 id="dashboard-collection-detail-title">Detalles</h2>
+        </div>
+        <button id="close-dashboard-collection-detail-panel" class="icon-button" type="button" aria-label="Cerrar detalle operativo">
+          &times;
+        </button>
+      </div>
+
+      <div class="process-context">
+        <p class="context-label">Vista ampliada</p>
+        <h3 id="dashboard-collection-detail-context-title">Sin elementos activos</h3>
+        <p id="dashboard-collection-detail-context-meta" class="context-meta"></p>
+      </div>
+
+      <div id="dashboard-collection-detail-list" class="dashboard-collection-detail-list"></div>
     </section>
   </aside>
 
@@ -1917,6 +1980,100 @@
           <p id="output-edit-feedback" class="microcopy save-feedback" aria-live="polite"></p>
         </div>
       </form>
+    </section>
+  </aside>
+
+  <aside id="companion-panel" class="process-panel companion-panel" aria-hidden="true">
+    <div class="process-backdrop" data-close-companion-panel="true"></div>
+
+    <section class="process-card companion-card" role="dialog" aria-modal="true" aria-labelledby="companion-panel-title">
+      <div class="process-header">
+        <div>
+          <p class="section-kicker">Personalización</p>
+          <h2 id="companion-panel-title">Personaje y frases</h2>
+        </div>
+        <button id="close-companion-panel" class="icon-button" type="button" aria-label="Cerrar personalización del personaje">
+          &times;
+        </button>
+      </div>
+
+      <div class="process-context">
+        <p class="context-label">Panel superior</p>
+        <h3 id="companion-active-name">Sin personaje activo</h3>
+        <p id="companion-active-phrase" class="context-meta">Sin frase activa.</p>
+      </div>
+
+      <div class="idea-detail-layout">
+        <section class="form-block companion-block">
+          <div class="form-block-head">
+            <p class="context-label">Personajes</p>
+            <p class="field-help">Sube una imagen transparente, guarda varios personajes y activa el que quieras mostrar arriba.</p>
+          </div>
+
+          <form id="companion-character-form" class="stack-form" novalidate>
+            <label class="field">
+              <span>Nombre del personaje</span>
+              <input
+                id="companion-character-name"
+                name="characterName"
+                type="text"
+                maxlength="48"
+                autocomplete="off"
+                placeholder="Ejemplo: Bruma"
+                required
+              >
+            </label>
+
+            <label class="field">
+              <span>Imagen PNG o WEBP</span>
+              <input
+                id="companion-character-image"
+                name="characterImage"
+                type="file"
+                accept="image/png,image/webp"
+                required
+              >
+              <small class="field-help">Conviene usar fondo transparente para que el personaje se vea limpio en el panel superior.</small>
+            </label>
+
+            <div class="inline-actions">
+              <button id="companion-character-save" type="submit" class="button button-primary">Guardar personaje</button>
+            </div>
+          </form>
+
+          <div id="companion-characters-list" class="companion-library-list"></div>
+        </section>
+
+        <section class="form-block companion-block">
+          <div class="form-block-head">
+            <p class="context-label">Frases</p>
+            <p class="field-help">Escribe una frase activa, guárdala para reutilizarla y elige cualquiera de tu biblioteca cuando quieras.</p>
+          </div>
+
+          <form id="companion-phrase-form" class="stack-form" novalidate>
+            <label class="field">
+              <span>Frase activa</span>
+              <input
+                id="companion-phrase-input"
+                name="activePhraseText"
+                type="text"
+                maxlength="120"
+                autocomplete="off"
+                placeholder="Hoy, solo avanza."
+              >
+            </label>
+
+            <div class="inline-actions">
+              <button id="companion-phrase-apply" type="submit" class="button button-primary">Actualizar frase activa</button>
+              <button id="companion-phrase-save" type="button" class="button button-secondary">Guardar en biblioteca</button>
+            </div>
+          </form>
+
+          <div id="companion-phrases-list" class="companion-library-list"></div>
+        </section>
+      </div>
+
+      <p id="companion-panel-feedback" class="microcopy save-feedback" aria-live="polite"></p>
     </section>
   </aside>
 

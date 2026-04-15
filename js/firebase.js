@@ -14,6 +14,7 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
 
 const REQUIRED_FIREBASE_KEYS = ["apiKey", "authDomain", "projectId", "appId"];
 
@@ -38,6 +39,9 @@ const firebaseApp = firebaseReady
 
 const auth = firebaseApp ? getAuth(firebaseApp) : null;
 const db = firebaseApp ? getFirestore(firebaseApp) : null;
+const storage = firebaseApp && String(firebaseConfig.storageBucket || "").trim()
+  ? getStorage(firebaseApp)
+  : null;
 const authPersistenceReady = auth
   ? setPersistence(auth, browserLocalPersistence).catch((error) => {
     console.warn("No se pudo fijar la persistencia local de Firebase Auth.", error);
@@ -53,6 +57,7 @@ export function getFirebaseServices() {
     app: firebaseApp,
     auth,
     db,
+    storage,
   };
 }
 

@@ -12,11 +12,14 @@ import {
 } from "./config.js";
 import { elements } from "./dom.js";
 import {
+  appState,
   getIdeaById,
   getOutputById,
   getOutputByIdeaId,
+  getPrioritiesSorted,
   getProjectFromOutput,
   getProjectById,
+  getProjectsSorted,
   uiState,
 } from "./state.js";
 import {
@@ -24,8 +27,10 @@ import {
   formatCatalogLabel,
   formatDate,
   getSelectableFieldState,
+  normalizeText,
 } from "./utils.js";
 import {
+  setDashboardCollectionDetailPanelVisibility,
   setIdeaDetailPanelVisibility,
   resetOutputEditForm,
   resetProcessForm,
@@ -151,6 +156,191 @@ function buildIdeaTraceCards(currentIdea, linkedOutput, linkedProject) {
   return cards.join("");
 }
 
+function buildDashboardCollectionDetailMetaRows(rows) {
+  return rows
+    .map(
+      ([label, value]) => `
+        <div class="dashboard-collection-detail-meta-row">
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(value)}</strong>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function buildDashboardCollectionEmptyState(title, text) {
+  return `
+    <article class="empty-state dashboard-collection-detail-empty">
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(text)}</p>
+    </article>
+  `;
+}
+
+function buildDashboardProjectDetailCards(projects) {
+  return projects
+    .map((project, index) => {
+      const linkedOutput = appState.outputs.find(
+        (output) => output.id === (project.sourceOutputId || project.origenSalidaId)
+      ) || null;
+      const linkedIdea = linkedOutput
+        ? appState.ideas.find((idea) => idea.id === linkedOutput.ideaId) || null
+        : null;
+      const contextText = project.expectedResult
+        || linkedOutput?.problem
+        || linkedIdea?.note
+        || "Sin descripción larga guardada. Este proyecto solo tiene su estructura operativa actual.";
+      const supportNotes = [
+        linkedOutput?.minimumVersion ? `Versión mínima: ${linkedOutput.minimumVersion}` : "",
+        linkedOutput?.timing ? `Momento sugerido: ${linkedOutput.timing}` : "",
+        linkedIdea?.source ? `Fuente: ${linkedIdea.source}` : "",
+      ].filter(Boolean).join(" | ") || "Sin notas secundarias registradas por ahora.";
+      const detailRows = buildDashboardCollectionDetailMetaRows([
+        ["Estado", project.status || "activo"],
+        ["Prioridad", project.priority || "media"],
+        ["Área", project.area || "Sin área"],
+        ["Activado", formatDate(project.activatedAt || project.fechaActivacion || project.createdAt || project.updatedAt)],
+        ["Actualizado", formatDate(project.updatedAt || project.activatedAt || project.createdAt)],
+        ["Origen", linkedOutput ? "Salida operativa vinculada" : "Proyecto legado"],
+      ]);
+
+      return `
+        <section class="form-block dashboard-collection-detail-item">
+          <div class="dashboard-collection-detail-head">
+            <div class="dashboard-collection-detail-heading">
+              <p class="dashboard-collection-detail-kicker">Proyecto activo ${index + 1}</p>
+              <h3>${escapeHtml(project.name || "Sin nombre")}</h3>
+            </div>
+            <span class="status-badge status-${normalizeText(project.status || "activo").replace(/\s+/g, "-")}">
+              ${escapeHtml(project.status || "activo")}
+            </span>
+          </div>
+
+          <div class="dashboard-collection-detail-summary">
+            <div>
+              <p class="context-label">Resultado</p>
+              <p class="dashboard-collection-detail-copy">${escapeHtml(project.expectedResult || "Sin resultado esperado visible.")}</p>
+            </div>
+            <div>
+              <p class="context-label">Siguiente paso</p>
+              <p class="dashboard-collection-detail-copy">${escapeHtml(project.nextAction || "Sin siguiente paso visible.")}</p>
+            </div>
+          </div>
+
+          <div class="dashboard-collection-detail-summary">
+            <div>
+              <p class="context-label">Contexto</p>
+              <p class="dashboard-collection-detail-copy">${escapeHtml(contextText)}</p>
+            </div>
+            <div>
+              <p class="context-label">Notas útiles</p>
+              <p class="dashboard-collection-detail-copy">${escapeHtml(supportNotes)}</p>
+            </div>
+          </div>
+
+          <div class="dashboard-collection-detail-meta-grid">
+            ${detailRows}
+          </div>
+        </section>
+      `;
+    })
+    .join("");
+}
+
+function buildDashboardPriorityDetailCards(priorities) {
+  return priorities
+    .map((priority, index) => {
+      const detailRows = buildDashboardCollectionDetailMetaRows([
+        ["Estado", priority.status || "activa"],
+        ["Actualizada", formatDate(priority.updatedAt)],
+        ["Posición visible", `${index + 1} de ${priorities.length}`],
+      ]);
+
+      return `
+        <section class="form-block dashboard-collection-detail-item">
+          <div class="dashboard-collection-detail-head">
+            <div class="dashboard-collection-detail-heading">
+              <p class="dashboard-collection-detail-kicker">Prioridad activa ${index + 1}</p>
+              <h3>${escapeHtml(priority.title || "Sin título")}</h3>
+            </div>
+            <span class="status-badge status-${normalizeText(priority.status || "activa").replace(/\s+/g, "-")}">
+              ${escapeHtml(priority.status || "activa")}
+            </span>
+          </div>
+
+          <div class="dashboard-collection-detail-summary dashboard-collection-detail-summary-single">
+            <div>
+              <p class="context-label">Lectura actual</p>
+              <p class="dashboard-collection-detail-copy">
+                No hay descripción larga guardada para esta prioridad. La referencia disponible hoy es su título operativo, su estado y su última actualización.
+              </p>
+            </div>
+          </div>
+
+          <div class="dashboard-collection-detail-meta-grid">
+            ${detailRows}
+          </div>
+        </section>
+      `;
+    })
+    .join("");
+}
+
+export function renderDashboardCollectionDetailPanel() {
+  const detailType = uiState.dashboardCollectionDetailType;
+
+  if (!detailType) {
+    elements.dashboardCollectionDetailTitle.textContent = "Detalles";
+    elements.dashboardCollectionDetailContextTitle.textContent = "Sin elementos activos";
+    elements.dashboardCollectionDetailContextMeta.textContent = "";
+    elements.dashboardCollectionDetailList.innerHTML = "";
+    setDashboardCollectionDetailPanelVisibility(false);
+    return;
+  }
+
+  if (detailType === "projects") {
+    const projects = getProjectsSorted()
+      .filter((project) => project.status === "activo")
+      .slice(0, 3);
+
+    elements.dashboardCollectionDetailTitle.textContent = "Detalles de proyectos activos";
+    elements.dashboardCollectionDetailContextTitle.textContent = projects.length
+      ? `${projects.length} proyecto${projects.length === 1 ? "" : "s"} activo${projects.length === 1 ? "" : "s"}`
+      : "Sin proyectos activos";
+    elements.dashboardCollectionDetailContextMeta.textContent = projects.length
+      ? "Se muestran hasta 3 proyectos activos con el mejor contexto disponible dentro de la base actual."
+      : "Cuando actives un proyecto, aquí verás su resultado, siguiente paso y contexto operativo.";
+    elements.dashboardCollectionDetailList.innerHTML = projects.length
+      ? buildDashboardProjectDetailCards(projects)
+      : buildDashboardCollectionEmptyState(
+          "No hay proyectos activos",
+          "Activa un proyecto desde la capa operativa para verlo aquí con más contexto."
+        );
+    setDashboardCollectionDetailPanelVisibility(true);
+    return;
+  }
+
+  const priorities = getPrioritiesSorted()
+    .filter((priority) => priority.status !== "completada")
+    .slice(0, 3);
+
+  elements.dashboardCollectionDetailTitle.textContent = "Detalles de prioridades activas";
+  elements.dashboardCollectionDetailContextTitle.textContent = priorities.length
+    ? `${priorities.length} prioridad${priorities.length === 1 ? "" : "es"} activa${priorities.length === 1 ? "" : "s"}`
+    : "Sin prioridades activas";
+  elements.dashboardCollectionDetailContextMeta.textContent = priorities.length
+    ? "Se muestran hasta 3 prioridades activas usando la información operativa ya guardada."
+    : "Cuando definas prioridades activas, aquí tendrás una lectura rápida sin entrar al bloque de edición.";
+  elements.dashboardCollectionDetailList.innerHTML = priorities.length
+    ? buildDashboardPriorityDetailCards(priorities)
+    : buildDashboardCollectionEmptyState(
+        "No hay prioridades activas",
+        "Define prioridades en la sección operativa y este panel mostrará su lectura ampliada."
+      );
+  setDashboardCollectionDetailPanelVisibility(true);
+}
+
 export function renderProcessPanel() {
   const currentIdea = getIdeaById(uiState.processingIdeaId);
 
@@ -166,6 +356,8 @@ export function renderProcessPanel() {
   elements.processIdeaMeta.textContent =
     `Capturada el ${formatDate(currentIdea.createdAt)}` +
     (currentIdea.source ? ` - Fuente: ${currentIdea.source}` : "");
+  elements.processIdeaTitleField.value = currentIdea.title || "";
+  elements.processIdeaSourceField.value = currentIdea.source || "";
 
   const processProblemState = getSelectableFieldState(
     currentIdea.processing?.problem,
@@ -453,6 +645,16 @@ export function openIdeaDetailPanel(ideaId) {
 export function closeIdeaDetailPanel() {
   uiState.viewingIdeaId = null;
   renderIdeaDetailPanel();
+}
+
+export function openDashboardCollectionDetailPanel(detailType) {
+  uiState.dashboardCollectionDetailType = detailType;
+  renderDashboardCollectionDetailPanel();
+}
+
+export function closeDashboardCollectionDetailPanel() {
+  uiState.dashboardCollectionDetailType = "";
+  renderDashboardCollectionDetailPanel();
 }
 
 export function openOutputEditPanel(outputId) {

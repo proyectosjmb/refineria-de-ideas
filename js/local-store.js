@@ -262,6 +262,52 @@ function sanitizeArrayBlock(value, sanitizeItem, blockName) {
   }, []);
 }
 
+function buildDefaultCompanionCharacters() {
+  return COPILOT_OPTIONS.map((copilot) => ({
+    id: copilot.id,
+    name: copilot.name,
+    imageUrl: copilot.src,
+  }));
+}
+
+function sanitizeCompanionCharacter(character = {}) {
+  if (!character || typeof character !== "object") {
+    return null;
+  }
+
+  const id = normalizeString(character.id);
+  const name = normalizeString(character.name);
+  const imageUrl = normalizeString(character.imageUrl);
+
+  if (!id || !name || !imageUrl) {
+    return null;
+  }
+
+  return {
+    id,
+    name,
+    imageUrl,
+  };
+}
+
+function sanitizeCompanionPhrase(phrase = {}) {
+  if (!phrase || typeof phrase !== "object") {
+    return null;
+  }
+
+  const id = normalizeString(phrase.id);
+  const text = normalizeString(phrase.text);
+
+  if (!id || !text) {
+    return null;
+  }
+
+  return {
+    id,
+    text,
+  };
+}
+
 function normalizeCopilotType(value = "") {
   const fallbackType = COPILOT_OPTIONS.some((copilot) => copilot.id === DEFAULT_COPILOT_TYPE)
     ? DEFAULT_COPILOT_TYPE
@@ -278,22 +324,54 @@ function normalizeCopilotPhrase(value = "") {
 export function loadCopilotPreferences(legacyCopilot = {}) {
   const savedType = readLocalStorageItem(COPILOT_TYPE_STORAGE_KEY, "leer las preferencias de copiloto");
   const savedPhrase = readLocalStorageItem(COPILOT_PHRASE_STORAGE_KEY, "leer la frase del copiloto");
+  const builtInCharacters = buildDefaultCompanionCharacters();
+  const savedCharacters = Array.isArray(legacyCopilot?.characters)
+    ? sanitizeArrayBlock(legacyCopilot.characters, sanitizeCompanionCharacter, "copilot.characters")
+    : [];
+  const charactersMap = new Map(
+    builtInCharacters.map((character) => [character.id, character])
+  );
+
+  savedCharacters.forEach((character) => {
+    charactersMap.set(character.id, character);
+  });
+
+  const characters = [...charactersMap.values()];
+  const phrases = Array.isArray(legacyCopilot?.phrases)
+    ? sanitizeArrayBlock(legacyCopilot.phrases, sanitizeCompanionPhrase, "copilot.phrases")
+    : [];
+  const fallbackCharacterId = normalizeCopilotType(
+    legacyCopilot?.activeCharacterId || legacyCopilot?.type || savedType
+  );
+  const activeCharacterId = characters.some((character) => character.id === fallbackCharacterId)
+    ? fallbackCharacterId
+    : characters[0]?.id || fallbackCharacterId;
+  const activePhraseText = normalizeCopilotPhrase(
+    legacyCopilot?.activePhraseText || legacyCopilot?.phrase || savedPhrase
+  );
+  const matchingPhrase = phrases.find((phrase) => phrase.id === normalizeString(legacyCopilot?.activePhraseId))
+    || phrases.find((phrase) => phrase.text === activePhraseText);
 
   return {
-    type: normalizeCopilotType(savedType || legacyCopilot?.type),
-    phrase: normalizeCopilotPhrase(savedPhrase || legacyCopilot?.phrase),
+    type: activeCharacterId,
+    phrase: activePhraseText,
+    activeCharacterId,
+    activePhraseId: matchingPhrase?.id || "",
+    activePhraseText,
+    characters,
+    phrases,
   };
 }
 
 export function saveCopilotPreferences(copilot = {}) {
   writeLocalStorageItem(
     COPILOT_TYPE_STORAGE_KEY,
-    normalizeCopilotType(copilot.type),
+    normalizeCopilotType(copilot.activeCharacterId || copilot.type),
     "guardar el tipo de copiloto"
   );
   writeLocalStorageItem(
     COPILOT_PHRASE_STORAGE_KEY,
-    normalizeCopilotPhrase(copilot.phrase),
+    normalizeCopilotPhrase(copilot.activePhraseText || copilot.phrase),
     "guardar la frase del copiloto"
   );
 }
@@ -315,6 +393,7 @@ export function createSerializableAppState(state) {
     priorities: Array.isArray(state?.priorities) ? state.priorities : [],
     focusBlocks: Array.isArray(state?.focusBlocks) ? state.focusBlocks : [],
     boss: state?.boss || { title: "", note: "" },
+    copilot: loadCopilotPreferences(state?.copilot),
     reviews: state?.reviews || createInitialState().reviews,
     projects: Array.isArray(state?.projects) ? state.projects : [],
   };
@@ -325,7 +404,7 @@ export function loadAppStateFromLocalStorage() {
 
   if (!savedState) {
     const initialState = createInitialState();
-    initialState.copilot = loadCopilotPreferences(initialState.copilot);
+    initialState.copilot = loadCopilotPreferences({});
     return initialState;
   }
 
@@ -389,7 +468,7 @@ export function loadAppStateFromLocalStorage() {
   } catch (error) {
     console.warn("No se pudo leer el estado guardado. Se usara un estado limpio.", error);
     const initialState = createInitialState();
-    initialState.copilot = loadCopilotPreferences(initialState.copilot);
+    initialState.copilot = loadCopilotPreferences({});
     return initialState;
   }
 }

@@ -372,6 +372,8 @@ export function handleProcessSubmit(event) {
   }
 
   const formData = new FormData(elements.processForm);
+  const nextIdeaTitle = String(formData.get("ideaTitle") || "").trim();
+  const nextIdeaSource = String(formData.get("ideaSource") || "").trim();
   const resolvedProblem = getResolvedSelectFieldValue(
     formData.get("problem"),
     formData.get("problemCustom")
@@ -388,6 +390,11 @@ export function handleProcessSubmit(event) {
     formData.get("timing"),
     formData.get("timingCustom")
   );
+
+  if (!nextIdeaTitle) {
+    elements.processIdeaTitleField.focus();
+    return;
+  }
 
   if (!resolvedProblem) {
     if (String(formData.get("problem") || "").trim() === "otro") {
@@ -425,6 +432,8 @@ export function handleProcessSubmit(event) {
     return;
   }
 
+  idea.title = nextIdeaTitle;
+  idea.source = nextIdeaSource;
   idea.processing = {
     problem: resolvedProblem,
     purpose: resolvedPurpose,

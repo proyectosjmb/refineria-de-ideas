@@ -54,6 +54,17 @@ function getManagedOperationalState(state = {}) {
       title: String(state.boss?.title || "").trim(),
       note: String(state.boss?.note || "").trim(),
     },
+    copilot: state.copilot
+      ? {
+        ...state.copilot,
+        characters: Array.isArray(state.copilot.characters)
+          ? state.copilot.characters.map((character) => ({ ...character }))
+          : [],
+        phrases: Array.isArray(state.copilot.phrases)
+          ? state.copilot.phrases.map((phrase) => ({ ...phrase }))
+          : [],
+      }
+      : null,
     priorities: Array.isArray(state.priorities)
       ? state.priorities.map((priority) => ({ ...priority }))
       : [],
@@ -84,9 +95,12 @@ function hasRemoteOperationalData(remoteState = {}) {
     remoteMeta.focusExists
     || remoteMeta.operationExists
     || remoteMeta.reviewsExists
-    || remoteMeta.moneyExists
-    || remoteMeta.prioritiesCount
-    || remoteMeta.focusBlocksCount
+      || remoteMeta.moneyExists
+      || remoteMeta.companionExists
+      || remoteMeta.prioritiesCount
+      || remoteMeta.focusBlocksCount
+      || remoteMeta.companionCharactersCount
+      || remoteMeta.companionPhrasesCount
   );
 }
 
@@ -148,6 +162,11 @@ function mergeRemoteOperationalState(baseState, remoteState, options = {}) {
     moneyGoal: remoteState.meta?.moneyExists || hasRemoteAuthority
       ? (remoteState.moneyGoal || emptyMoneyGoal)
       : baseState.moneyGoal,
+    copilot: remoteState.meta?.companionExists
+      || remoteState.meta?.companionCharactersCount
+      || remoteState.meta?.companionPhrasesCount
+      ? (remoteState.copilot || baseState.copilot)
+      : baseState.copilot,
   };
 }
 

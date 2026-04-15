@@ -23,6 +23,7 @@ const feedbackTimeouts = {
   dashboardAction: null,
   dashboardActionState: null,
   dashboardGuide: null,
+  companionPanel: null,
   ideas: null,
   ideaDetail: null,
 };
@@ -61,6 +62,16 @@ export function setIdeaDetailPanelVisibility(isOpen) {
   updateBodyScrollState();
 }
 
+export function setDashboardCollectionDetailPanelVisibility(isOpen) {
+  if (!elements.dashboardCollectionDetailPanel) {
+    return;
+  }
+
+  elements.dashboardCollectionDetailPanel.classList.toggle("is-open", isOpen);
+  elements.dashboardCollectionDetailPanel.setAttribute("aria-hidden", String(!isOpen));
+  updateBodyScrollState();
+}
+
 export function setOutputEditPanelVisibility(isOpen) {
   elements.outputEditPanel.classList.toggle("is-open", isOpen);
   elements.outputEditPanel.setAttribute("aria-hidden", String(!isOpen));
@@ -73,13 +84,25 @@ export function setProjectEditPanelVisibility(isOpen) {
   updateBodyScrollState();
 }
 
+export function setCompanionPanelVisibility(isOpen) {
+  if (!elements.companionPanel) {
+    return;
+  }
+
+  elements.companionPanel.classList.toggle("is-open", isOpen);
+  elements.companionPanel.setAttribute("aria-hidden", String(!isOpen));
+  updateBodyScrollState();
+}
+
 export function updateBodyScrollState() {
   const isAnyPanelOpen =
     uiState.processingIdeaId
     || uiState.viewingIdeaId
+    || uiState.dashboardCollectionDetailType
     || uiState.editingOutputId
     || uiState.editingProjectId
-    || uiState.activatingProjectOutputId;
+    || uiState.activatingProjectOutputId
+    || uiState.isCopilotEditorOpen;
   document.body.style.overflow = isAnyPanelOpen ? "hidden" : "";
 }
 

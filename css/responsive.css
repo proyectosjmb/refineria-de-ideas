@@ -177,6 +177,13 @@
     width: 100%;
   }
 
+  .companion-library-card,
+  .companion-library-card-empty,
+  .companion-library-card-text {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
   .output-action-button,
   .project-action-button,
   .action-button {
@@ -227,6 +234,14 @@
     width: 100%;
   }
 
+  #section-panel-operativo .dashboard-execution-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #section-panel-operativo .dashboard-execution-main {
+    max-width: 148px;
+  }
+
   #section-panel-operativo .dashboard-action-card .dashboard-value {
     max-width: none;
   }
@@ -237,6 +252,11 @@
 
   .process-card {
     width: 100%;
+  }
+
+  .dashboard-collection-detail-summary,
+  .dashboard-collection-detail-meta-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .operation-daily-sticky {

@@ -37,6 +37,17 @@ function cloneOperationalLayer(state = {}) {
       title: String(state.boss?.title || "").trim(),
       note: String(state.boss?.note || "").trim(),
     },
+    copilot: state.copilot
+      ? {
+        ...state.copilot,
+        characters: Array.isArray(state.copilot.characters)
+          ? state.copilot.characters.map((character) => ({ ...character }))
+          : [],
+        phrases: Array.isArray(state.copilot.phrases)
+          ? state.copilot.phrases.map((phrase) => ({ ...phrase }))
+          : [],
+      }
+      : null,
     priorities: Array.isArray(state.priorities)
       ? state.priorities.map((priority) => ({ ...priority }))
       : [],
@@ -85,6 +96,9 @@ function countOperationalLayer(operationalLayer = {}) {
       || Number(operationalLayer.moneyGoal?.targetAmount || 0) > 0
       || String(operationalLayer.moneyGoal?.note || "").trim()
     ),
+    companionCharacters: operationalLayer.copilot?.characters?.length || 0,
+    companionPhrases: operationalLayer.copilot?.phrases?.length || 0,
+    hasCompanionPhrase: Boolean(String(operationalLayer.copilot?.activePhraseText || "").trim()),
   };
 }
 

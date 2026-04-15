@@ -10,17 +10,28 @@ import {
   setDoc,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-import { OPERATION_MODES } from "./config.js";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-storage.js";
+import {
+  COPILOT_OPTIONS,
+  DEFAULT_COPILOT_PHRASE,
+  DEFAULT_COPILOT_TYPE,
+  OPERATION_MODES,
+} from "./config.js";
 import { getFirebaseServices, isFirebaseConfigured } from "./firebase.js";
 import { parseMoneyAmount } from "./utils.js";
 
-const { db } = getFirebaseServices();
+const { db, storage } = getFirebaseServices();
 const REMOTE_COLLECTION_NAMES = ["ideas", "outputs", "projects"];
 const OPERATIONAL_META_DOCS = {
   focus: "focus",
   operation: "operation",
   reviews: "reviews",
   money: "money",
+  companion: "companion",
   dashboard: "dashboard",
 };
 
@@ -109,6 +120,97 @@ function normalizeMoneyDoc(data = {}) {
   };
 }
 
+function buildDefaultCompanionCharacters() {
+  return COPILOT_OPTIONS.map((copilot) => ({
+    id: copilot.id,
+    name: copilot.name,
+    imageUrl: copilot.src,
+  }));
+}
+
+function normalizeCompanionCharacterDoc(data = {}) {
+  const id = normalizeString(data.id);
+  const name = normalizeString(data.name);
+  const imageUrl = normalizeString(data.imageUrl);
+
+  if (!id || !name || !imageUrl) {
+    return null;
+  }
+
+  return {
+    id,
+    name,
+    imageUrl,
+  };
+}
+
+function normalizeCompanionPhraseDoc(data = {}) {
+  const id = normalizeString(data.id);
+  const text = normalizeString(data.text);
+
+  if (!id || !text) {
+    return null;
+  }
+
+  return {
+    id,
+    text,
+  };
+}
+
+function normalizeCompanionMetaDoc(data = {}) {
+  return {
+    activeCharacterId: normalizeString(data.activeCharacterId),
+    activePhraseId: normalizeString(data.activePhraseId),
+    activePhraseText: normalizeString(data.activePhraseText),
+  };
+}
+
+function normalizeCompanionState(companionState = {}) {
+  const defaultCharacters = buildDefaultCompanionCharacters();
+  const incomingCharacters = Array.isArray(companionState.characters)
+    ? companionState.characters
+      .map((character) => normalizeCompanionCharacterDoc(character))
+      .filter(Boolean)
+    : [];
+  const charactersMap = new Map(defaultCharacters.map((character) => [character.id, character]));
+
+  incomingCharacters.forEach((character) => {
+    charactersMap.set(character.id, character);
+  });
+
+  const characters = [...charactersMap.values()];
+  const phrases = Array.isArray(companionState.phrases)
+    ? companionState.phrases
+      .map((phrase) => normalizeCompanionPhraseDoc(phrase))
+      .filter(Boolean)
+    : [];
+  const defaultCharacterId = characters.some((character) => character.id === DEFAULT_COPILOT_TYPE)
+    ? DEFAULT_COPILOT_TYPE
+    : characters[0]?.id || "cohete";
+  const activeCharacterId = characters.some(
+    (character) => character.id === normalizeString(companionState.activeCharacterId)
+  )
+    ? normalizeString(companionState.activeCharacterId)
+    : defaultCharacterId;
+  const activePhraseId = phrases.some((phrase) => phrase.id === normalizeString(companionState.activePhraseId))
+    ? normalizeString(companionState.activePhraseId)
+    : "";
+  const activePhraseText = normalizeString(companionState.activePhraseText)
+    || phrases.find((phrase) => phrase.id === activePhraseId)?.text
+    || DEFAULT_COPILOT_PHRASE;
+
+  return {
+    type: activeCharacterId,
+    phrase: activePhraseText,
+    activeCharacterId,
+    activePhraseId,
+    activePhraseText,
+    characters,
+    phrases,
+  };
+}
+
 function normalizeDashboardOperationSnapshot(operationalState = {}) {
   const reviews = operationalState.reviews || {};
 
@@ -169,15 +271,21 @@ export async function loadRemoteOperationalState(userId) {
     operationSnapshot,
     reviewsSnapshot,
     moneySnapshot,
+    companionSnapshot,
     prioritiesSnapshot,
     focusBlocksSnapshot,
+    companionCharactersSnapshot,
+    companionPhrasesSnapshot,
   ] = await Promise.all([
     getDoc(getUserMetaRef(userId, OPERATIONAL_META_DOCS.focus)),
     getDoc(getUserMetaRef(userId, OPERATIONAL_META_DOCS.operation)),
     getDoc(getUserMetaRef(userId, OPERATIONAL_META_DOCS.reviews)),
     getDoc(getUserMetaRef(userId, OPERATIONAL_META_DOCS.money)),
+    getDoc(getUserMetaRef(userId, OPERATIONAL_META_DOCS.companion)),
     getDocs(getUserCollectionRef(userId, "priorities")),
     getDocs(getUserCollectionRef(userId, "focusBlocks")),
+    getDocs(getUserCollectionRef(userId, "companionCharacters")),
+    getDocs(getUserCollectionRef(userId, "companionPhrases")),
   ]);
   const normalizedOperation = operationSnapshot.exists()
     ? normalizeOperationDoc(operationSnapshot.data())
@@ -195,6 +303,11 @@ export async function loadRemoteOperationalState(userId) {
     todayAction: normalizedOperation.todayAction,
     currentMode: normalizedOperation.currentMode,
     boss: normalizedOperation.boss,
+    copilot: normalizeCompanionState({
+      ...normalizeCompanionMetaDoc(companionSnapshot.exists() ? companionSnapshot.data() : {}),
+      characters: mapSnapshotToRecords(companionCharactersSnapshot),
+      phrases: mapSnapshotToRecords(companionPhrasesSnapshot),
+    }),
     reviews: reviewsSnapshot.exists() ? normalizeReviewsDoc(reviewsSnapshot.data()) : null,
     moneyGoal: moneySnapshot.exists() ? normalizeMoneyDoc(moneySnapshot.data()) : null,
     priorities: sortRecordsByTimestamp(mapSnapshotToRecords(prioritiesSnapshot), "updatedAt"),
@@ -204,8 +317,11 @@ export async function loadRemoteOperationalState(userId) {
       operationExists: operationSnapshot.exists(),
       reviewsExists: reviewsSnapshot.exists(),
       moneyExists: moneySnapshot.exists(),
+      companionExists: companionSnapshot.exists(),
       prioritiesCount: prioritiesSnapshot.size,
       focusBlocksCount: focusBlocksSnapshot.size,
+      companionCharactersCount: companionCharactersSnapshot.size,
+      companionPhrasesCount: companionPhrasesSnapshot.size,
     },
   };
 }
@@ -254,6 +370,7 @@ export async function syncRemoteOperationalState(userId, operationalState = {}) 
   });
   const reviews = normalizeReviewsDoc(operationalState.reviews);
   const moneyGoal = normalizeMoneyDoc(operationalState.moneyGoal);
+  const companion = normalizeCompanionState(operationalState.copilot || operationalState.companion || {});
 
   await Promise.all([
     setDoc(
@@ -285,11 +402,23 @@ export async function syncRemoteOperationalState(userId, operationalState = {}) 
       moneyGoal,
       { merge: true }
     ),
+    setDoc(
+      getUserMetaRef(userId, OPERATIONAL_META_DOCS.companion),
+      {
+        activeCharacterId: companion.activeCharacterId,
+        activePhraseId: companion.activePhraseId,
+        activePhraseText: companion.activePhraseText,
+      },
+      { merge: true }
+    ),
     syncOneCollection(userId, "priorities", operationalState.priorities || []),
     syncOneCollection(userId, "focusBlocks", operationalState.focusBlocks || []),
+    syncOneCollection(userId, "companionCharacters", companion.characters || []),
+    syncOneCollection(userId, "companionPhrases", companion.phrases || []),
     saveDashboardMeta(userId, {
       operationSnapshot: normalizeDashboardOperationSnapshot({
         ...operationalState,
+        copilot: companion,
         focus,
         ...operation,
         reviews,
@@ -309,4 +438,22 @@ export async function loadDashboardMeta(userId) {
 export async function saveDashboardMeta(userId, payload = {}) {
   assertRemoteAvailable();
   await setDoc(getDashboardMetaRef(userId), payload, { merge: true });
+}
+
+export async function uploadCompanionCharacterImage(userId, characterId, file) {
+  assertRemoteAvailable();
+
+  if (!storage) {
+    throw new Error("Firebase Storage no esta disponible en esta configuracion.");
+  }
+
+  if (!userId || !characterId || !file) {
+    throw new Error("Faltan datos para subir la imagen del personaje.");
+  }
+
+  const imageRef = ref(storage, `users/${userId}/companionCharacters/${characterId}/image`);
+  await uploadBytes(imageRef, file, {
+    contentType: file.type || "image/png",
+  });
+  return getDownloadURL(imageRef);
 }

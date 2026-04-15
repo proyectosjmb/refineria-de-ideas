@@ -21,6 +21,11 @@ export function createInitialState() {
   const defaultCopilotType = COPILOT_OPTIONS.some((copilot) => copilot.id === DEFAULT_COPILOT_TYPE)
     ? DEFAULT_COPILOT_TYPE
     : COPILOT_OPTIONS[0]?.id || "cohete";
+  const defaultCharacters = COPILOT_OPTIONS.map((copilot) => ({
+    id: copilot.id,
+    name: copilot.name,
+    imageUrl: copilot.src,
+  }));
 
   return {
     ideas: [],
@@ -47,6 +52,11 @@ export function createInitialState() {
     copilot: {
       type: defaultCopilotType,
       phrase: DEFAULT_COPILOT_PHRASE,
+      activeCharacterId: defaultCopilotType,
+      activePhraseId: "",
+      activePhraseText: DEFAULT_COPILOT_PHRASE,
+      characters: defaultCharacters,
+      phrases: [],
     },
     reviews: {
       daily: {
@@ -106,6 +116,7 @@ export const uiState = {
   dashboardActionFeedback: "",
   dashboardActionDetailsOpen: false,
   dashboardActionState: "idle",
+  dashboardCollectionDetailType: "",
   dashboardLastCompletedText: "",
   dashboardGuideKey: "",
   isCopilotEditorOpen: false,
